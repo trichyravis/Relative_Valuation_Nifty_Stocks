@@ -707,10 +707,19 @@ if analysis_mode == "Single Stock Analysis":
         with st.expander("📊 DETAILED VALUATION BREAKDOWN", expanded=False):
             
             # -------- COMPARABLE MULTIPLES SECTION --------
-            st.subheader("💰 Comparable Multiples Valuation")
+            st.markdown('<div style="background-color: #f0f7ff; padding: 15px; border-left: 5px solid #003366; border-radius: 8px; margin-bottom: 20px;"><h3 style="color: #003366; margin: 0 0 10px 0;">💰 COMPARABLE MULTIPLES VALUATION</h3></div>', unsafe_allow_html=True)
             
             sector = NIFTY_50_DATA[selected_ticker]['Sector']
-            st.write(f"**Sector:** {sector}")
+            
+            # Display sector info prominently
+            col_sector_info1, col_sector_info2 = st.columns([1, 3])
+            with col_sector_info1:
+                st.markdown(f"""
+                <div style="background-color: #e3f2fd; padding: 12px; border-radius: 6px; text-align: center;">
+                    <div style="font-size: 12px; color: #666;">SECTOR</div>
+                    <div style="font-weight: bold; color: #003366; margin-top: 5px; font-size: 14px;">{sector}</div>
+                </div>
+                """, unsafe_allow_html=True)
             
             # Get peer companies in same sector
             peer_companies = [
@@ -720,22 +729,32 @@ if analysis_mode == "Single Stock Analysis":
             ]
             
             if peer_companies:
-                st.write(f"**Peer Companies:** {', '.join([name for _, name in peer_companies[:5]])}")
+                with col_sector_info2:
+                    st.markdown(f"""
+                    <div style="background-color: #f3e5f5; padding: 12px; border-radius: 6px;">
+                        <div style="font-size: 12px; color: #666; margin-bottom: 8px;">👥 PEER COMPANIES ({len(peer_companies[:5])} selected)</div>
+                        <div style="font-weight: bold; color: #6a1b9a; font-size: 13px; line-height: 1.6;">
+                        {', '.join([name for _, name in peer_companies[:5]])}
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                st.markdown("---")
                 
                 # Fetch metrics for peer companies
                 peer_metrics = []
-                with st.spinner("Analyzing comparable companies..."):
-                    for peer_ticker, peer_name in peer_companies[:5]:
-                        peer_info = fetch_stock_info(peer_ticker)
-                        if peer_info:
-                            peer_data = {
-                                'Company': peer_name,
-                                'P/E': peer_info.get('trailingPE'),
-                                'P/B': peer_info.get('priceToBook'),
-                                'P/S': peer_info.get('priceToSalesTrailing12Months'),
-                                'EV/EBITDA': peer_info.get('enterpriseToEbitda'),
-                            }
-                            peer_metrics.append(peer_data)
+                st.markdown("**📊 Fetching peer company multiples...**")
+                for peer_ticker, peer_name in peer_companies[:5]:
+                    peer_info = fetch_stock_info(peer_ticker)
+                    if peer_info:
+                        peer_data = {
+                            'Company': peer_name,
+                            'P/E': peer_info.get('trailingPE'),
+                            'P/B': peer_info.get('priceToBook'),
+                            'P/S': peer_info.get('priceToSalesTrailing12Months'),
+                            'EV/EBITDA': peer_info.get('enterpriseToEbitda'),
+                        }
+                        peer_metrics.append(peer_data)
                 
                 if peer_metrics:
                     st.markdown("**Peer Company Multiples:**")
