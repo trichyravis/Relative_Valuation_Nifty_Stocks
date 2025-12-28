@@ -805,38 +805,72 @@ if analysis_mode == "Single Stock Analysis":
         
         if hist_data is not None and len(hist_data) > 0:
             try:
-                # Create simple dataframe
+                # Extract close prices - handle all formats
+                try:
+                    if isinstance(hist_data.columns, pd.MultiIndex):
+                        close_prices = hist_data[('Close', selected_ticker)]
+                    else:
+                        close_prices = hist_data['Close']
+                except:
+                    close_prices = hist_data['Close'] if 'Close' in hist_data.columns else hist_data.iloc[:, 0]
+                
+                # Ensure 1D array
+                if isinstance(close_prices, pd.DataFrame):
+                    close_prices = close_prices.iloc[:, 0]
+                
+                close_prices = pd.to_numeric(close_prices, errors='coerce')
+                
+                # Create clean dataframe
                 df = pd.DataFrame({
-                    'Date': hist_data.index,
-                    'Close': hist_data['Close'].values
-                })
+                    'Date': close_prices.index,
+                    'Close': close_prices.values
+                }).dropna()
                 
-                df = df.sort_values('Date')
-                df['MA20'] = df['Close'].rolling(20).mean()
-                df['MA50'] = df['Close'].rolling(50).mean()
-                
-                # Create chart
-                fig = go.Figure()
-                
-                fig.add_trace(go.Scatter(x=df['Date'], y=df['Close'], name='Close Price', line=dict(color='#003366', width=3)))
-                fig.add_trace(go.Scatter(x=df['Date'], y=df['MA20'], name='20-Day MA', line=dict(color='#4472C4', width=2, dash='dash')))
-                fig.add_trace(go.Scatter(x=df['Date'], y=df['MA50'], name='50-Day MA', line=dict(color='#FF7C1F', width=2, dash='dot')))
-                
-                fig.update_layout(
-                    title=f'{company_name} - Stock Price Analysis',
-                    xaxis_title='Date',
-                    yaxis_title='Price (₹)',
-                    template='plotly_white',
-                    height=450,
-                    hovermode='x unified'
-                )
-                
-                st.plotly_chart(fig, use_container_width=True)
+                if len(df) < 5:
+                    st.info("Insufficient data points for chart")
+                else:
+                    # Calculate moving averages
+                    df['MA20'] = df['Close'].rolling(window=20, min_periods=1).mean()
+                    df['MA50'] = df['Close'].rolling(window=50, min_periods=1).mean()
+                    
+                    # Create chart
+                    fig = go.Figure()
+                    
+                    fig.add_trace(go.Scatter(
+                        x=df['Date'], 
+                        y=df['Close'], 
+                        name='Close Price', 
+                        line=dict(color='#003366', width=3)
+                    ))
+                    fig.add_trace(go.Scatter(
+                        x=df['Date'], 
+                        y=df['MA20'], 
+                        name='20-Day MA', 
+                        line=dict(color='#4472C4', width=2, dash='dash')
+                    ))
+                    fig.add_trace(go.Scatter(
+                        x=df['Date'], 
+                        y=df['MA50'], 
+                        name='50-Day MA', 
+                        line=dict(color='#FF7C1F', width=2, dash='dot')
+                    ))
+                    
+                    fig.update_layout(
+                        title=f'{company_name} - Stock Price Analysis ({period})',
+                        xaxis_title='Date',
+                        yaxis_title='Price (₹)',
+                        template='plotly_white',
+                        height=450,
+                        hovermode='x unified'
+                    )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
                 
             except Exception as e:
-                st.error(f"Error: {str(e)}")
+                st.error(f"Chart Error: {str(e)}")
+                st.info("Try selecting a different time period or stock")
         else:
-            st.warning("No data")
+            st.warning("No historical data available")
 
 elif analysis_mode == "Sector Comparison":
     st.markdown("### Sector Comparison Coming Soon...")
