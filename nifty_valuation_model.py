@@ -514,46 +514,18 @@ with header_col1:
     """, unsafe_allow_html=True)
 
 with header_col2:
-    # Try to load the mountain banner image
-    try:
-        import os
-        # Try multiple possible paths
-        image_paths = [
-            'mountain_banner.png',
-            './mountain_banner.png',
-            'streamlit_app/mountain_banner.png',
-        ]
-        
-        image_loaded = False
-        for img_path in image_paths:
-            if os.path.exists(img_path):
-                st.image(img_path, use_column_width=True)
-                image_loaded = True
-                break
-        
-        if not image_loaded:
-            # Fallback: Display styled box
-            st.markdown("""
-            <div style="background: linear-gradient(135deg, #1a4d7a 0%, #0d2d4d 100%); padding: 50px 20px; 
-                        border-radius: 10px; color: white; text-align: center; min-height: 240px; 
-                        display: flex; align-items: center; justify-content: center;">
-                <div>
-                    <div style="font-size: 48px; margin-bottom: 10px;">🏔️</div>
-                    <p style="font-size: 14px; margin: 0;">Mountain Path<br>World of Finance</p>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-    except Exception as e:
-        st.markdown("""
-        <div style="background: linear-gradient(135deg, #1a4d7a 0%, #0d2d4d 100%); padding: 50px 20px; 
-                    border-radius: 10px; color: white; text-align: center; min-height: 240px; 
-                    display: flex; align-items: center; justify-content: center;">
-            <div>
-                <div style="font-size: 48px; margin-bottom: 10px;">🏔️</div>
-                <p style="font-size: 14px; margin: 0;">Mountain Path<br>World of Finance</p>
-            </div>
+    # Display styled banner box (since image file path won't work on Streamlit Cloud)
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #1a4d7a 0%, #0d2d4d 100%); padding: 60px 30px; 
+                border-radius: 10px; color: white; text-align: center; min-height: 240px; 
+                display: flex; align-items: center; justify-content: center; border: 3px solid #003366;">
+        <div>
+            <div style="font-size: 56px; margin-bottom: 15px;">🏔️</div>
+            <p style="font-size: 16px; font-weight: bold; margin: 0 0 5px 0;">Mountain Path</p>
+            <p style="font-size: 13px; margin: 0; color: #b0d4ff;">World of Finance</p>
         </div>
-        """, unsafe_allow_html=True)
+    </div>
+    """, unsafe_allow_html=True)
 
 st.markdown("---")
 
