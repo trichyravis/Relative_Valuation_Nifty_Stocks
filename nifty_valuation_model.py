@@ -705,8 +705,31 @@ if analysis_mode == "Single Stock Analysis":
 
         st.markdown("---")
         
-        # Expandable detailed analysis
-        with st.expander("📊 DETAILED VALUATION BREAKDOWN", expanded=False):
+        # Enhanced expandable detailed analysis with attractive styling
+        with st.expander(""):
+            pass
+        
+        # Custom styled header for detailed breakdown
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #1a4d7a 0%, #2d6fa3 100%); 
+                    padding: 20px 25px; border-radius: 12px; margin: 20px 0; 
+                    border-left: 6px solid #ffd700; cursor: pointer; 
+                    box-shadow: 0 4px 15px rgba(0, 51, 102, 0.3);">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <h2 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">
+                        📊 DETAILED VALUATION BREAKDOWN
+                    </h2>
+                    <p style="color: #b0d4ff; margin: 8px 0 0 0; font-size: 13px;">
+                        Click below to explore comprehensive valuation analysis
+                    </p>
+                </div>
+                <div style="font-size: 32px;">📈</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        with st.expander("**Show Full Analysis →**", expanded=False):
             
             # -------- COMPARABLE MULTIPLES SECTION --------
             st.markdown('<div style="background-color: #f0f7ff; padding: 15px; border-left: 5px solid #003366; border-radius: 8px; margin-bottom: 20px;"><h3 style="color: #003366; margin: 0 0 10px 0;">💰 COMPARABLE MULTIPLES VALUATION</h3></div>', unsafe_allow_html=True)
