@@ -23,6 +23,12 @@ from datetime import datetime, timedelta
 import warnings
 warnings.filterwarnings('ignore')
 
+# Import comparable multiples module
+try:
+    from comparable_multiples import get_sector_multiples, calculate_implied_valuation, get_valuation_summary
+except ImportError:
+    st.warning("⚠️ Comparable multiples module not found. Some features may be unavailable.")
+
 # ============================================================================
 # PAGE CONFIG & STYLING
 # ============================================================================
@@ -242,29 +248,241 @@ def calculate_sector_analysis(sector, stocks_data):
     
     return pd.DataFrame(sector_metrics)
 
-def get_valuation_signal(pe, pb, ps):
-    """Generate valuation signal based on multiples"""
-    signals = []
+def analyze_valuation_signal(pe, pb, ps, ev_ebitda, peg=None):
+    """Generate detailed valuation signal with metric-by-metric breakdown"""
     
-    if pe and pe < 15:
-        signals.append("Undervalued (P/E)")
-    elif pe and pe > 25:
-        signals.append("Overvalued (P/E)")
+    analysis = {
+        'metrics': {},
+        'overall_sentiment': [],
+        'overvalued_count': 0,
+        'undervalued_count': 0,
+        'fair_count': 0
+    }
     
-    if pb and pb < 1:
-        signals.append("Undervalued (P/B)")
-    elif pb and pb > 3:
-        signals.append("Overvalued (P/B)")
+    # P/E Analysis
+    if pe:
+        if pe < 12:
+            analysis['metrics']['P/E'] = {
+                'value': pe,
+                'signal': '🟢 Undervalued',
+                'status': 'Undervalued',
+                'reasoning': 'Trading at low earnings multiple',
+                'severity': 'Strong Buy',
+                'color': 'green'
+            }
+            analysis['undervalued_count'] += 1
+        elif pe < 15:
+            analysis['metrics']['P/E'] = {
+                'value': pe,
+                'signal': '🟡 Undervalued',
+                'status': 'Undervalued',
+                'reasoning': 'Below historical average',
+                'severity': 'Buy',
+                'color': 'lightgreen'
+            }
+            analysis['undervalued_count'] += 1
+        elif pe < 20:
+            analysis['metrics']['P/E'] = {
+                'value': pe,
+                'signal': '🟡 Fair Valued',
+                'status': 'Fair',
+                'reasoning': 'Trading at reasonable multiple',
+                'severity': 'Hold',
+                'color': 'yellow'
+            }
+            analysis['fair_count'] += 1
+        elif pe < 30:
+            analysis['metrics']['P/E'] = {
+                'value': pe,
+                'signal': '🟠 Overvalued',
+                'status': 'Overvalued',
+                'reasoning': 'Premium to historical average',
+                'severity': 'Sell',
+                'color': 'orange'
+            }
+            analysis['overvalued_count'] += 1
+        else:
+            analysis['metrics']['P/E'] = {
+                'value': pe,
+                'signal': '🔴 Heavily Overvalued',
+                'status': 'Overvalued',
+                'reasoning': 'Trading at very high multiple',
+                'severity': 'Strong Sell',
+                'color': 'red'
+            }
+            analysis['overvalued_count'] += 2
     
-    if ps and ps < 1:
-        signals.append("Undervalued (P/S)")
-    elif ps and ps > 3:
-        signals.append("Overvalued (P/S)")
+    # P/B Analysis
+    if pb:
+        if pb < 0.8:
+            analysis['metrics']['P/B'] = {
+                'value': pb,
+                'signal': '🟢 Undervalued',
+                'status': 'Undervalued',
+                'reasoning': 'Trading below book value',
+                'severity': 'Strong Buy',
+                'color': 'green'
+            }
+            analysis['undervalued_count'] += 1
+        elif pb < 1.2:
+            analysis['metrics']['P/B'] = {
+                'value': pb,
+                'signal': '🟡 Fair Valued',
+                'status': 'Fair',
+                'reasoning': 'Near book value',
+                'severity': 'Hold',
+                'color': 'yellow'
+            }
+            analysis['fair_count'] += 1
+        elif pb < 2.0:
+            analysis['metrics']['P/B'] = {
+                'value': pb,
+                'signal': '🟡 Moderately Valued',
+                'status': 'Fair',
+                'reasoning': 'Premium to book value',
+                'severity': 'Hold',
+                'color': 'yellow'
+            }
+            analysis['fair_count'] += 1
+        elif pb < 3.0:
+            analysis['metrics']['P/B'] = {
+                'value': pb,
+                'signal': '🟠 Overvalued',
+                'status': 'Overvalued',
+                'reasoning': 'Significant premium to book',
+                'severity': 'Sell',
+                'color': 'orange'
+            }
+            analysis['overvalued_count'] += 1
+        else:
+            analysis['metrics']['P/B'] = {
+                'value': pb,
+                'signal': '🔴 Heavily Overvalued',
+                'status': 'Overvalued',
+                'reasoning': 'Extreme premium to book value',
+                'severity': 'Strong Sell',
+                'color': 'red'
+            }
+            analysis['overvalued_count'] += 2
     
-    if not signals:
-        signals.append("Fair Valued")
+    # P/S Analysis
+    if ps:
+        if ps < 0.5:
+            analysis['metrics']['P/S'] = {
+                'value': ps,
+                'signal': '🟢 Undervalued',
+                'status': 'Undervalued',
+                'reasoning': 'Very low sales multiple',
+                'severity': 'Strong Buy',
+                'color': 'green'
+            }
+            analysis['undervalued_count'] += 1
+        elif ps < 1.0:
+            analysis['metrics']['P/S'] = {
+                'value': ps,
+                'signal': '🟡 Fair Valued',
+                'status': 'Fair',
+                'reasoning': 'Reasonable sales multiple',
+                'severity': 'Hold',
+                'color': 'yellow'
+            }
+            analysis['fair_count'] += 1
+        elif ps < 2.0:
+            analysis['metrics']['P/S'] = {
+                'value': ps,
+                'signal': '🟡 Moderately Valued',
+                'status': 'Fair',
+                'reasoning': 'Moderate premium',
+                'severity': 'Hold',
+                'color': 'yellow'
+            }
+            analysis['fair_count'] += 1
+        elif ps < 3.0:
+            analysis['metrics']['P/S'] = {
+                'value': ps,
+                'signal': '🟠 Overvalued',
+                'status': 'Overvalued',
+                'reasoning': 'Elevated sales multiple',
+                'severity': 'Sell',
+                'color': 'orange'
+            }
+            analysis['overvalued_count'] += 1
+        else:
+            analysis['metrics']['P/S'] = {
+                'value': ps,
+                'signal': '🔴 Heavily Overvalued',
+                'status': 'Overvalued',
+                'reasoning': 'Excessive sales multiple',
+                'severity': 'Strong Sell',
+                'color': 'red'
+            }
+            analysis['overvalued_count'] += 2
     
-    return ", ".join(signals)
+    # EV/EBITDA Analysis
+    if ev_ebitda:
+        if ev_ebitda < 8:
+            analysis['metrics']['EV/EBITDA'] = {
+                'value': ev_ebitda,
+                'signal': '🟢 Undervalued',
+                'status': 'Undervalued',
+                'reasoning': 'Low EBITDA multiple',
+                'severity': 'Strong Buy',
+                'color': 'green'
+            }
+            analysis['undervalued_count'] += 1
+        elif ev_ebitda < 12:
+            analysis['metrics']['EV/EBITDA'] = {
+                'value': ev_ebitda,
+                'signal': '🟡 Fair Valued',
+                'status': 'Fair',
+                'reasoning': 'Historical average multiple',
+                'severity': 'Hold',
+                'color': 'yellow'
+            }
+            analysis['fair_count'] += 1
+        elif ev_ebitda < 15:
+            analysis['metrics']['EV/EBITDA'] = {
+                'value': ev_ebitda,
+                'signal': '🟡 Moderately Valued',
+                'status': 'Fair',
+                'reasoning': 'Above average multiple',
+                'severity': 'Hold',
+                'color': 'yellow'
+            }
+            analysis['fair_count'] += 1
+        elif ev_ebitda < 20:
+            analysis['metrics']['EV/EBITDA'] = {
+                'value': ev_ebitda,
+                'signal': '🟠 Overvalued',
+                'status': 'Overvalued',
+                'reasoning': 'Premium EBITDA multiple',
+                'severity': 'Sell',
+                'color': 'orange'
+            }
+            analysis['overvalued_count'] += 1
+        else:
+            analysis['metrics']['EV/EBITDA'] = {
+                'value': ev_ebitda,
+                'signal': '🔴 Heavily Overvalued',
+                'status': 'Overvalued',
+                'reasoning': 'Very high EBITDA multiple',
+                'severity': 'Strong Sell',
+                'color': 'red'
+            }
+            analysis['overvalued_count'] += 2
+    
+    # Overall sentiment
+    if analysis['undervalued_count'] > analysis['overvalued_count']:
+        analysis['overall'] = '🟢 UNDERVALUED - BUY'
+        analysis['recommendation'] = 'Strong Buy Signal'
+    elif analysis['undervalued_count'] == analysis['overvalued_count']:
+        analysis['overall'] = '🟡 FAIRLY VALUED - HOLD'
+        analysis['recommendation'] = 'Hold Signal'
+    else:
+        analysis['overall'] = '🔴 OVERVALUED - SELL'
+        analysis['recommendation'] = 'Sell Signal'
+    
+    return analysis
 
 # ============================================================================
 # STREAMLIT INTERFACE
@@ -395,20 +613,167 @@ if analysis_mode == "Single Stock Analysis":
         
         with col3:
             st.markdown("### 🎯 VALUATION SIGNAL")
-            signal = get_valuation_signal(
+            
+            # Get detailed valuation analysis
+            signal_analysis = analyze_valuation_signal(
                 metrics.get('P/E Ratio'),
                 metrics.get('P/B Ratio'),
-                metrics.get('P/S Ratio')
+                metrics.get('P/S Ratio'),
+                metrics.get('EV/EBITDA')
             )
+            
+            # Display overall sentiment
             st.markdown(f"""
-            <div class="metric-card">
-            <div style="text-align: center; padding: 20px;">
-                <div style="color: #003366; font-size: 18px; font-weight: bold; margin-bottom: 10px;">
-                {signal}
+            <div style="background-color: #f0f0f0; padding: 15px; border-radius: 8px; border-left: 5px solid #003366;">
+                <div style="font-size: 18px; font-weight: bold; color: #003366; margin-bottom: 10px;">
+                {signal_analysis['overall']}
+                </div>
+                <div style="font-size: 13px; color: #555;">
+                {signal_analysis['recommendation']}
                 </div>
             </div>
-            </div>
             """, unsafe_allow_html=True)
+            
+            # Expandable detailed analysis
+            with st.expander("📊 Detailed Valuation Breakdown", expanded=False):
+                
+                # Create metric details table
+                metric_details = []
+                for metric_name, metric_data in signal_analysis['metrics'].items():
+                    metric_details.append({
+                        'Metric': metric_name,
+                        'Value': f"{metric_data['value']:.2f}x",
+                        'Signal': metric_data['signal'],
+                        'Status': metric_data['status'],
+                        'Assessment': metric_data['reasoning']
+                    })
+                
+                if metric_details:
+                    df_signals = pd.DataFrame(metric_details)
+                    st.dataframe(df_signals, use_container_width=True, hide_index=True)
+                
+                # Metric-by-metric analysis
+                st.markdown("#### 📈 Metric-by-Metric Analysis")
+                
+                for metric_name, metric_data in signal_analysis['metrics'].items():
+                    col_signal1, col_signal2, col_signal3 = st.columns(3)
+                    
+                    with col_signal1:
+                        # Color-coded signal box
+                        colors_map = {
+                            'green': '#2ecc71',
+                            'lightgreen': '#7cb342',
+                            'yellow': '#f1c40f',
+                            'orange': '#ff9800',
+                            'red': '#e74c3c'
+                        }
+                        
+                        color = colors_map.get(metric_data['color'], '#95a5a6')
+                        
+                        st.markdown(f"""
+                        <div style="background-color: {color}; color: white; padding: 12px; border-radius: 6px; text-align: center;">
+                            <div style="font-weight: bold; font-size: 14px;">{metric_name}</div>
+                            <div style="font-size: 20px; font-weight: bold; margin: 5px 0;">{metric_data['value']:.2f}x</div>
+                            <div style="font-size: 12px;">{metric_data['signal']}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col_signal2:
+                        st.markdown(f"""
+                        <div style="padding: 12px; border-left: 4px solid #003366;">
+                            <b>Status:</b> {metric_data['status']}<br>
+                            <b>Severity:</b> {metric_data['severity']}<br>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col_signal3:
+                        st.markdown(f"""
+                        <div style="padding: 12px; background-color: #f9f9f9; border-radius: 6px;">
+                            <b>Reasoning:</b><br>
+                            {metric_data['reasoning']}
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    st.markdown("---")
+                
+                # Summary scores
+                st.markdown("#### 📊 Valuation Score")
+                
+                score_col1, score_col2, score_col3, score_col4 = st.columns(4)
+                
+                with score_col1:
+                    st.metric("Undervalued Metrics", signal_analysis['undervalued_count'])
+                with score_col2:
+                    st.metric("Fair Valued Metrics", signal_analysis['fair_count'])
+                with score_col3:
+                    st.metric("Overvalued Metrics", signal_analysis['overvalued_count'])
+                with score_col4:
+                    total_metrics = (signal_analysis['undervalued_count'] + 
+                                   signal_analysis['fair_count'] + 
+                                   signal_analysis['overvalued_count'])
+                    st.metric("Total Metrics", total_metrics)
+                
+                # Investment recommendation
+                st.markdown("#### 💡 Investment Recommendation")
+                
+                if "UNDERVALUED" in signal_analysis['overall']:
+                    recommendation_text = """
+                    **🟢 BUY SIGNAL**
+                    
+                    The stock appears undervalued across multiple metrics. Potential for upside returns.
+                    
+                    *Suitable for:*
+                    - Value investors
+                    - Contrarian investors
+                    - Long-term holders
+                    - Risk-tolerant investors
+                    """
+                    rec_color = "#d4edda"
+                    rec_border = "#28a745"
+                
+                elif "FAIRLY" in signal_analysis['overall']:
+                    recommendation_text = """
+                    **🟡 HOLD SIGNAL**
+                    
+                    The stock is trading at reasonable valuations. Balanced risk-reward profile.
+                    
+                    *Suitable for:*
+                    - Income investors
+                    - Conservative investors
+                    - Current holders
+                    - Moderate growth seekers
+                    """
+                    rec_color = "#fff3cd"
+                    rec_border = "#ffc107"
+                
+                else:
+                    recommendation_text = """
+                    **🔴 SELL SIGNAL**
+                    
+                    The stock appears overvalued on multiple metrics. Limited upside, significant downside risk.
+                    
+                    *Suitable for:*
+                    - Risk-averse investors
+                    - Profit-takers
+                    - Short-term traders
+                    - Those seeking better valuations
+                    """
+                    rec_color = "#f8d7da"
+                    rec_border = "#dc3545"
+                
+                st.markdown(f"""
+                <div style="background-color: {rec_color}; border-left: 5px solid {rec_border}; padding: 15px; border-radius: 6px;">
+                {recommendation_text}
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Disclaimer
+                st.markdown("""
+                ---
+                **⚠️ Disclaimer:** This analysis is based on historical thresholds and valuation ratios. 
+                Always conduct your own due diligence and consult financial advisors before making investment decisions.
+                """)
+
         
         st.markdown("---")
         
@@ -485,6 +850,264 @@ if analysis_mode == "Single Stock Analysis":
                             vol = df['Close'].pct_change().std() * 100
                             st.metric("Volatility", f"{vol:.2f}%")
                         
+                        # ================================================================
+                        # COMPARABLE MULTIPLES VALUATION
+                        # ================================================================
+                        st.markdown("---")
+                        st.markdown("### 💰 RELATIVE VALUATION USING COMPARABLE MULTIPLES")
+                        
+                        st.markdown("""
+                        **How it works:** This section uses valuation multiples from comparable companies in the same sector 
+                        to calculate an implied valuation for the selected company.
+                        """)
+                        
+                        # Get sector for the selected stock
+                        sector = NIFTY_50_DATA[selected_ticker]['Sector']
+                        
+                        try:
+                            sector_multiples = get_sector_multiples(sector)
+                            
+                            if sector_multiples:
+                                # Prepare financials dictionary
+                                company_financials = {
+                                    'market_cap': info.get('marketCap', 0) / 10000000 if info.get('marketCap') else 0,
+                                    'net_income': metrics.get('Net Income (Implied)', 0) if 'Net Income (Implied)' in metrics else (
+                                        (info.get('currentPrice', info.get('regularMarketPrice', 0)) * info.get('sharesOutstanding', 0) / 100) if info.get('sharesOutstanding') else 0
+                                    ),
+                                    'book_value': (info.get('bookValue', 0) * info.get('sharesOutstanding', 0) / 10000000) if info.get('bookValue') and info.get('sharesOutstanding') else None,
+                                    'revenue': (info.get('marketCap', 0) / 10000000) / metrics.get('P/S Ratio', 1) if metrics.get('P/S Ratio') and info.get('marketCap') else 0,
+                                    'ebitda': (info.get('marketCap', 0) / 10000000) / metrics.get('EV/EBITDA', 1) if metrics.get('EV/EBITDA') and info.get('marketCap') else 0,
+                                    'shares_outstanding': info.get('sharesOutstanding', 0) / 10000000 if info.get('sharesOutstanding') else 0,
+                                    'share_price': info.get('currentPrice', info.get('regularMarketPrice', 0)),
+                                    'net_debt': (info.get('totalDebt', 0) - info.get('totalCash', 0)) if info.get('totalDebt') else 0
+                                }
+                                
+                                # Get valuation summary
+                                valuation_df = get_valuation_summary(company_financials, sector)
+                                
+                                if not valuation_df.empty:
+                                    st.markdown(f"**Sector:** {sector}")
+                                    st.markdown(f"**Comparable Companies:** {', '.join(sector_multiples['companies'][:5])}")
+                                    
+                                    st.markdown("---")
+                                    
+                                    # Display comparison table
+                                    st.markdown("#### Comparable Multiples Valuation")
+                                    st.dataframe(valuation_df, use_container_width=True, hide_index=True)
+                                    
+                                    st.markdown("---")
+                                    
+                                    # Detailed breakdown by multiple
+                                    st.markdown("#### Valuation Analysis by Multiple Type")
+                                    
+                                    tab1, tab2, tab3, tab4 = st.tabs(['P/E Ratio', 'P/B Ratio', 'P/S Ratio', 'EV/EBITDA'])
+                                    
+                                    with tab1:
+                                        st.markdown("##### **Price/Earnings Multiple Analysis**")
+                                        
+                                        if company_financials['net_income'] and company_financials['net_income'] > 0:
+                                            pe_results = calculate_implied_valuation(
+                                                company_financials, 
+                                                sector_multiples['multiples'], 
+                                                'P/E'
+                                            )
+                                            
+                                            if pe_results:
+                                                col_pe1, col_pe2, col_pe3, col_pe4 = st.columns(4)
+                                                
+                                                for idx, (method, result) in enumerate(pe_results.items()):
+                                                    with [col_pe1, col_pe2, col_pe3, col_pe4][idx]:
+                                                        color = '#90EE90' if result['upside_downside'] > 0 else '#FFB6C6'
+                                                        st.markdown(f"""
+                                                        <div style="background-color: {color}; padding: 12px; border-radius: 6px; text-align: center;">
+                                                            <b>{method.upper()}</b><br>
+                                                            Multiple: {result['multiple']:.2f}x<br>
+                                                            <span style="font-size: 18px; font-weight: bold;">₹{result['implied_price']:.0f}</span><br>
+                                                            <span style="font-size: 12px;">{result['upside_downside']:+.1f}%</span>
+                                                        </div>
+                                                        """, unsafe_allow_html=True)
+                                                
+                                                st.markdown("---")
+                                                
+                                                col_pe_left, col_pe_right = st.columns(2)
+                                                
+                                                with col_pe_left:
+                                                    st.markdown("**Sector P/E Range**")
+                                                    pe_range = sector_multiples['multiples']['P/E']
+                                                    st.write(f"High: {pe_range['high']:.2f}x")
+                                                    st.write(f"Average: {pe_range['avg']:.2f}x")
+                                                    st.write(f"Median: {pe_range['median']:.2f}x")
+                                                    st.write(f"Low: {pe_range['low']:.2f}x")
+                                                
+                                                with col_pe_right:
+                                                    st.markdown("**Current Stock**")
+                                                    st.write(f"Current P/E: {metrics.get('P/E Ratio', 'N/A'):.2f}x" if metrics.get('P/E Ratio') else "Current P/E: N/A")
+                                                    st.write(f"Current Price: ₹{company_financials['share_price']:.0f}")
+                                                    median_val = pe_results['median']['implied_price']
+                                                    st.write(f"Median Implied: ₹{median_val:.0f}")
+                                                    st.write(f"Upside/Downside: {pe_results['median']['upside_downside']:+.1f}%")
+                                        else:
+                                            st.info("P/E multiple not available due to negative or missing earnings")
+                                    
+                                    with tab2:
+                                        st.markdown("##### **Price-to-Book Multiple Analysis**")
+                                        
+                                        if company_financials['book_value'] and company_financials['book_value'] > 0:
+                                            pb_results = calculate_implied_valuation(
+                                                company_financials, 
+                                                sector_multiples['multiples'], 
+                                                'P/B'
+                                            )
+                                            
+                                            if pb_results:
+                                                col_pb1, col_pb2, col_pb3, col_pb4 = st.columns(4)
+                                                
+                                                for idx, (method, result) in enumerate(pb_results.items()):
+                                                    with [col_pb1, col_pb2, col_pb3, col_pb4][idx]:
+                                                        color = '#90EE90' if result['upside_downside'] > 0 else '#FFB6C6'
+                                                        st.markdown(f"""
+                                                        <div style="background-color: {color}; padding: 12px; border-radius: 6px; text-align: center;">
+                                                            <b>{method.upper()}</b><br>
+                                                            Multiple: {result['multiple']:.2f}x<br>
+                                                            <span style="font-size: 18px; font-weight: bold;">₹{result['implied_price']:.0f}</span><br>
+                                                            <span style="font-size: 12px;">{result['upside_downside']:+.1f}%</span>
+                                                        </div>
+                                                        """, unsafe_allow_html=True)
+                                                
+                                                st.markdown("---")
+                                                
+                                                col_pb_left, col_pb_right = st.columns(2)
+                                                
+                                                with col_pb_left:
+                                                    st.markdown("**Sector P/B Range**")
+                                                    pb_range = sector_multiples['multiples']['P/B']
+                                                    st.write(f"High: {pb_range['high']:.2f}x")
+                                                    st.write(f"Average: {pb_range['avg']:.2f}x")
+                                                    st.write(f"Median: {pb_range['median']:.2f}x")
+                                                    st.write(f"Low: {pb_range['low']:.2f}x")
+                                                
+                                                with col_pb_right:
+                                                    st.markdown("**Current Stock**")
+                                                    st.write(f"Current P/B: {metrics.get('P/B Ratio', 'N/A'):.2f}x" if metrics.get('P/B Ratio') else "Current P/B: N/A")
+                                                    st.write(f"Current Price: ₹{company_financials['share_price']:.0f}")
+                                                    median_val = pb_results['median']['implied_price']
+                                                    st.write(f"Median Implied: ₹{median_val:.0f}")
+                                                    st.write(f"Upside/Downside: {pb_results['median']['upside_downside']:+.1f}%")
+                                        else:
+                                            st.info("P/B multiple not available due to missing book value")
+                                    
+                                    with tab3:
+                                        st.markdown("##### **Price-to-Sales Multiple Analysis**")
+                                        
+                                        if company_financials['revenue'] and company_financials['revenue'] > 0:
+                                            ps_results = calculate_implied_valuation(
+                                                company_financials, 
+                                                sector_multiples['multiples'], 
+                                                'P/S'
+                                            )
+                                            
+                                            if ps_results:
+                                                col_ps1, col_ps2, col_ps3, col_ps4 = st.columns(4)
+                                                
+                                                for idx, (method, result) in enumerate(ps_results.items()):
+                                                    with [col_ps1, col_ps2, col_ps3, col_ps4][idx]:
+                                                        color = '#90EE90' if result['upside_downside'] > 0 else '#FFB6C6'
+                                                        st.markdown(f"""
+                                                        <div style="background-color: {color}; padding: 12px; border-radius: 6px; text-align: center;">
+                                                            <b>{method.upper()}</b><br>
+                                                            Multiple: {result['multiple']:.2f}x<br>
+                                                            <span style="font-size: 18px; font-weight: bold;">₹{result['implied_price']:.0f}</span><br>
+                                                            <span style="font-size: 12px;">{result['upside_downside']:+.1f}%</span>
+                                                        </div>
+                                                        """, unsafe_allow_html=True)
+                                                
+                                                st.markdown("---")
+                                                
+                                                col_ps_left, col_ps_right = st.columns(2)
+                                                
+                                                with col_ps_left:
+                                                    st.markdown("**Sector P/S Range**")
+                                                    ps_range = sector_multiples['multiples']['P/S']
+                                                    st.write(f"High: {ps_range['high']:.2f}x")
+                                                    st.write(f"Average: {ps_range['avg']:.2f}x")
+                                                    st.write(f"Median: {ps_range['median']:.2f}x")
+                                                    st.write(f"Low: {ps_range['low']:.2f}x")
+                                                
+                                                with col_ps_right:
+                                                    st.markdown("**Current Stock**")
+                                                    st.write(f"Current P/S: {metrics.get('P/S Ratio', 'N/A'):.2f}x" if metrics.get('P/S Ratio') else "Current P/S: N/A")
+                                                    st.write(f"Current Price: ₹{company_financials['share_price']:.0f}")
+                                                    median_val = ps_results['median']['implied_price']
+                                                    st.write(f"Median Implied: ₹{median_val:.0f}")
+                                                    st.write(f"Upside/Downside: {ps_results['median']['upside_downside']:+.1f}%")
+                                        else:
+                                            st.info("P/S multiple not available due to missing revenue")
+                                    
+                                    with tab4:
+                                        st.markdown("##### **EV/EBITDA Multiple Analysis**")
+                                        
+                                        if company_financials['ebitda'] and company_financials['ebitda'] > 0:
+                                            ev_results = calculate_implied_valuation(
+                                                company_financials, 
+                                                sector_multiples['multiples'], 
+                                                'EV/EBITDA'
+                                            )
+                                            
+                                            if ev_results:
+                                                col_ev1, col_ev2, col_ev3, col_ev4 = st.columns(4)
+                                                
+                                                for idx, (method, result) in enumerate(ev_results.items()):
+                                                    with [col_ev1, col_ev2, col_ev3, col_ev4][idx]:
+                                                        color = '#90EE90' if result['upside_downside'] > 0 else '#FFB6C6'
+                                                        st.markdown(f"""
+                                                        <div style="background-color: {color}; padding: 12px; border-radius: 6px; text-align: center;">
+                                                            <b>{method.upper()}</b><br>
+                                                            Multiple: {result['multiple']:.2f}x<br>
+                                                            <span style="font-size: 18px; font-weight: bold;">₹{result['implied_price']:.0f}</span><br>
+                                                            <span style="font-size: 12px;">{result['upside_downside']:+.1f}%</span>
+                                                        </div>
+                                                        """, unsafe_allow_html=True)
+                                                
+                                                st.markdown("---")
+                                                
+                                                col_ev_left, col_ev_right = st.columns(2)
+                                                
+                                                with col_ev_left:
+                                                    st.markdown("**Sector EV/EBITDA Range**")
+                                                    ev_range = sector_multiples['multiples']['EV/EBITDA']
+                                                    st.write(f"High: {ev_range['high']:.2f}x")
+                                                    st.write(f"Average: {ev_range['avg']:.2f}x")
+                                                    st.write(f"Median: {ev_range['median']:.2f}x")
+                                                    st.write(f"Low: {ev_range['low']:.2f}x")
+                                                
+                                                with col_ev_right:
+                                                    st.markdown("**Current Stock**")
+                                                    st.write(f"Current EV/EBITDA: {metrics.get('EV/EBITDA', 'N/A'):.2f}x" if metrics.get('EV/EBITDA') else "Current EV/EBITDA: N/A")
+                                                    st.write(f"Current Price: ₹{company_financials['share_price']:.0f}")
+                                                    median_val = ev_results['median']['implied_price']
+                                                    st.write(f"Median Implied: ₹{median_val:.0f}")
+                                                    st.write(f"Upside/Downside: {ev_results['median']['upside_downside']:+.1f}%")
+                                        else:
+                                            st.info("EV/EBITDA multiple not available due to missing EBITDA")
+                                    
+                                    st.markdown("---")
+                                    st.markdown("""
+                                    **📊 Key Takeaway:**
+                                    - **Green boxes** = Stock appears undervalued vs sector comparables
+                                    - **Red boxes** = Stock appears overvalued vs sector comparables
+                                    - Median multiple used as most representative
+                                    - Compare current price with implied prices across methods
+                                    """)
+                                
+                                else:
+                                    st.info("Valuation data not available for this stock")
+                            else:
+                                st.warning(f"Comparable multiples not available for {sector} sector")
+                        
+                        except Exception as e:
+                            st.warning(f"Could not load comparable multiples: {str(e)}")
+                        
+
             except Exception as e:
                 st.error(f"Error: {str(e)}")
         else:
