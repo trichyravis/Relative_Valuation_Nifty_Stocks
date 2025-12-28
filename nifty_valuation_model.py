@@ -1,3 +1,4 @@
+
 """
 THE MOUNTAIN PATH - WORLD OF FINANCE
 Dynamic Relative Valuation Model for Indian Nifty Stocks
@@ -417,47 +418,94 @@ if analysis_mode == "Single Stock Analysis":
         hist_data = fetch_stock_data(selected_ticker, period)
         
         if hist_data is not None and len(hist_data) > 0:
-            # Calculate moving averages
-            hist_data['MA20'] = hist_data['Close'].rolling(window=20).mean()
-            hist_data['MA50'] = hist_data['Close'].rolling(window=50).mean()
-            
-            fig = go.Figure()
-            
-            fig.add_trace(go.Scatter(
-                x=hist_data.index,
-                y=hist_data['Close'],
-                name='Close Price',
-                line=dict(color='#003366', width=2),
-                hovertemplate='<b>Date:</b> %{x|%Y-%m-%d}<br><b>Price:</b> ₹%{y:.2f}<extra></extra>'
-            ))
-            
-            fig.add_trace(go.Scatter(
-                x=hist_data.index,
-                y=hist_data['MA20'],
-                name='20-Day MA',
-                line=dict(color='#ADD8E6', width=1, dash='dash'),
-                hovertemplate='<b>20-Day MA:</b> ₹%{y:.2f}<extra></extra>'
-            ))
-            
-            fig.add_trace(go.Scatter(
-                x=hist_data.index,
-                y=hist_data['MA50'],
-                name='50-Day MA',
-                line=dict(color='#FFD700', width=1, dash='dash'),
-                hovertemplate='<b>50-Day MA:</b> ₹%{y:.2f}<extra></extra>'
-            ))
-            
-            fig.update_layout(
-                title=f'{company_name} - Stock Price Analysis',
-                xaxis_title='Date',
-                yaxis_title='Price (₹)',
-                template='plotly_white',
-                hovermode='x unified',
-                height=500,
-                margin=dict(l=0, r=0, t=40, b=0)
-            )
-            
-            st.plotly_chart(fig, use_container_width=True)
+            try:
+                # Reset index to make dates a column
+                chart_data = hist_data.reset_index()
+                chart_data = chart_data.rename(columns={'Date': 'Date'} if 'Date' in chart_data.columns else {'index': 'Date'})
+                
+                # Sort by date
+                chart_data = chart_data.sort_values('Date')
+                
+                # Calculate moving averages
+                chart_data['MA20'] = chart_data['Close'].rolling(window=20, min_periods=1).mean()
+                chart_data['MA50'] = chart_data['Close'].rolling(window=50, min_periods=1).mean()
+                
+                # Create figure
+                fig = go.Figure()
+                
+                # Add Close Price line
+                fig.add_trace(go.Scatter(
+                    x=chart_data['Date'],
+                    y=chart_data['Close'].astype(float),
+                    name='Close Price',
+                    line=dict(color='#003366', width=2.5),
+                    mode='lines',
+                    hovertemplate='<b>Date:</b> %{x|%d %b %Y}<br><b>Close:</b> ₹%{y:,.2f}<extra></extra>'
+                ))
+                
+                # Add 20-Day MA
+                fig.add_trace(go.Scatter(
+                    x=chart_data['Date'],
+                    y=chart_data['MA20'].astype(float),
+                    name='20-Day MA',
+                    line=dict(color='#4472C4', width=1.5, dash='dash'),
+                    mode='lines',
+                    hovertemplate='<b>20-Day MA:</b> ₹%{y:,.2f}<extra></extra>'
+                ))
+                
+                # Add 50-Day MA
+                fig.add_trace(go.Scatter(
+                    x=chart_data['Date'],
+                    y=chart_data['MA50'].astype(float),
+                    name='50-Day MA',
+                    line=dict(color='#FF7C1F', width=1.5, dash='dash'),
+                    mode='lines',
+                    hovertemplate='<b>50-Day MA:</b> ₹%{y:,.2f}<extra></extra>'
+                ))
+                
+                # Update layout with improved styling
+                fig.update_layout(
+                    title=dict(
+                        text=f'<b>{company_name} - Stock Price Analysis</b>',
+                        font=dict(size=18, color='#003366')
+                    ),
+                    xaxis_title='Date',
+                    yaxis_title='Price (₹)',
+                    template='plotly_white',
+                    hovermode='x unified',
+                    height=500,
+                    margin=dict(l=60, r=40, t=60, b=60),
+                    font=dict(family="Arial, sans-serif", size=11),
+                    xaxis=dict(
+                        showgrid=True,
+                        gridwidth=1,
+                        gridcolor='#e0e0e0',
+                        showline=True,
+                        linewidth=1,
+                        linecolor='#003366'
+                    ),
+                    yaxis=dict(
+                        showgrid=True,
+                        gridwidth=1,
+                        gridcolor='#e0e0e0',
+                        showline=True,
+                        linewidth=1,
+                        linecolor='#003366'
+                    ),
+                    legend=dict(
+                        x=0.01,
+                        y=0.99,
+                        bgcolor='rgba(255, 255, 255, 0.8)',
+                        bordercolor='#003366',
+                        borderwidth=1
+                    )
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+                
+            except Exception as e:
+                st.error(f"Error rendering chart: {str(e)}")
+                st.info("Try selecting a different time period from the sidebar.")
     else:
         st.error("Unable to fetch data. Please try again.")
 
