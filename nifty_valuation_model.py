@@ -1206,254 +1206,255 @@ if analysis_mode == "Single Stock Analysis":
                         """, unsafe_allow_html=True)
                         
                         # Expandable detailed analysis
-                        # ================================================================
-                        # ENHANCED DETAILED VALUATION BREAKDOWN
-                        # ================================================================
-                        st.markdown("""
-                        <div style="background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%); 
-                                    padding: 20px; border-radius: 10px; border-left: 5px solid #003366;
-                                    margin: 20px 0;">
-                            <div style="font-size: 16px; font-weight: bold; color: #003366; margin-bottom: 10px;">
-                            📊 DETAILED VALUATION BREAKDOWN
-                            </div>
-                            <div style="font-size: 12px; color: #666;">
-                            Comprehensive metric-by-metric analysis with investment signals and severity assessment
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        # -------- QUICK SUMMARY TABLE --------
-                        st.markdown('<div style="font-weight: bold; color: #003366; margin: 20px 0 10px 0; font-size: 14px;">📋 QUICK SUMMARY</div>', unsafe_allow_html=True)
-                        
-                        # Create metric details table
-                        metric_details = []
-                        for metric_name, metric_data in signal_analysis['metrics'].items():
-                            signal_emoji = '🟢' if metric_data['status'] == 'Undervalued' else ('🟡' if metric_data['status'] == 'Fair' else '🔴')
-                            metric_details.append({
-                                'Metric': metric_name,
-                                'Value': f"{metric_data['value']:.2f}x",
-                                'Signal': f"{signal_emoji} {metric_data['signal']}",
-                                'Status': metric_data['status'],
-                                'Reasoning': metric_data['reasoning']
-                            })
-                        
-                        if metric_details:
-                            df_signals = pd.DataFrame(metric_details)
-                            st.dataframe(df_signals, use_container_width=True, hide_index=True)
-                        
-                        # -------- METRIC-BY-METRIC DETAILED ANALYSIS --------
-                        st.markdown('<div style="font-weight: bold; color: #003366; margin: 30px 0 15px 0; font-size: 14px;">🔍 METRIC-BY-METRIC ANALYSIS</div>', unsafe_allow_html=True)
-                        
-                        for idx, (metric_name, metric_data) in enumerate(signal_analysis['metrics'].items(), 1):
-                            # Color scheme
-                            colors_map = {
-                                'green': ('#2ecc71', '#d4edda', '#155724'),
-                                'lightgreen': ('#7cb342', '#e8f5e9', '#2e7d32'),
-                                'yellow': ('#f1c40f', '#fff3cd', '#856404'),
-                                'orange': ('#ff9800', '#fff3e0', '#e65100'),
-                                'red': ('#e74c3c', '#f8d7da', '#721c24')
-                            }
-                            
-                            color_tuple = colors_map.get(metric_data['color'], ('#95a5a6', '#f0f0f0', '#555'))
-                            main_color, bg_color, text_color = color_tuple
-                            
-                            # Signal emoji
-                            signal_emoji = '🟢' if metric_data['status'] == 'Undervalued' else ('🟡' if metric_data['status'] == 'Fair' else '🔴')
-                            
-                            st.markdown(f"""
-                            <div style="background-color: {bg_color}; border-left: 5px solid {main_color}; 
-                                        padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                                
-                                <!-- Header Row -->
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                                    <div style="font-weight: bold; font-size: 16px; color: {text_color};">
-                                    {idx}. {metric_name}
-                                    </div>
-                                    <div style="background-color: {main_color}; color: white; padding: 6px 12px; 
-                                               border-radius: 20px; font-weight: bold; font-size: 14px;">
-                                    {metric_data['value']:.2f}x
-                                    </div>
+                        with st.expander("📊 DETAILED VALUATION BREAKDOWN", expanded=False):
+                            # ================================================================
+                            # ENHANCED DETAILED VALUATION BREAKDOWN
+                            # ================================================================
+                            st.markdown("""
+                            <div style="background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%); 
+                                        padding: 20px; border-radius: 10px; border-left: 5px solid #003366;
+                                        margin: 20px 0;">
+                                <div style="font-size: 16px; font-weight: bold; color: #003366; margin-bottom: 10px;">
+                                📊 DETAILED VALUATION BREAKDOWN
                                 </div>
+                                <div style="font-size: 12px; color: #666;">
+                                Comprehensive metric-by-metric analysis with investment signals and severity assessment
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                            
+                            # -------- QUICK SUMMARY TABLE --------
+                            st.markdown('<div style="font-weight: bold; color: #003366; margin: 20px 0 10px 0; font-size: 14px;">📋 QUICK SUMMARY</div>', unsafe_allow_html=True)
+                            
+                            # Create metric details table
+                            metric_details = []
+                            for metric_name, metric_data in signal_analysis['metrics'].items():
+                                signal_emoji = '🟢' if metric_data['status'] == 'Undervalued' else ('🟡' if metric_data['status'] == 'Fair' else '🔴')
+                                metric_details.append({
+                                    'Metric': metric_name,
+                                    'Value': f"{metric_data['value']:.2f}x",
+                                    'Signal': f"{signal_emoji} {metric_data['signal']}",
+                                    'Status': metric_data['status'],
+                                    'Reasoning': metric_data['reasoning']
+                                })
+                            
+                            if metric_details:
+                                df_signals = pd.DataFrame(metric_details)
+                                st.dataframe(df_signals, use_container_width=True, hide_index=True)
+                            
+                            # -------- METRIC-BY-METRIC DETAILED ANALYSIS --------
+                            st.markdown('<div style="font-weight: bold; color: #003366; margin: 30px 0 15px 0; font-size: 14px;">🔍 METRIC-BY-METRIC ANALYSIS</div>', unsafe_allow_html=True)
+                            
+                            for idx, (metric_name, metric_data) in enumerate(signal_analysis['metrics'].items(), 1):
+                                # Color scheme
+                                colors_map = {
+                                    'green': ('#2ecc71', '#d4edda', '#155724'),
+                                    'lightgreen': ('#7cb342', '#e8f5e9', '#2e7d32'),
+                                    'yellow': ('#f1c40f', '#fff3cd', '#856404'),
+                                    'orange': ('#ff9800', '#fff3e0', '#e65100'),
+                                    'red': ('#e74c3c', '#f8d7da', '#721c24')
+                                }
                                 
-                                <!-- Content Grid -->
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                color_tuple = colors_map.get(metric_data['color'], ('#95a5a6', '#f0f0f0', '#555'))
+                                main_color, bg_color, text_color = color_tuple
+                                
+                                # Signal emoji
+                                signal_emoji = '🟢' if metric_data['status'] == 'Undervalued' else ('🟡' if metric_data['status'] == 'Fair' else '🔴')
+                                
+                                st.markdown(f"""
+                                <div style="background-color: {bg_color}; border-left: 5px solid {main_color}; 
+                                            padding: 15px; border-radius: 8px; margin-bottom: 15px;">
                                     
-                                    <!-- Left Column: Status & Severity -->
-                                    <div>
-                                        <div style="margin-bottom: 10px;">
-                                            <span style="font-weight: bold; color: {text_color};">Status:</span>
-                                            <span style="color: {text_color}; margin-left: 5px;">{signal_emoji} {metric_data['status']}</span>
+                                    <!-- Header Row -->
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                        <div style="font-weight: bold; font-size: 16px; color: {text_color};">
+                                        {idx}. {metric_name}
                                         </div>
+                                        <div style="background-color: {main_color}; color: white; padding: 6px 12px; 
+                                                   border-radius: 20px; font-weight: bold; font-size: 14px;">
+                                        {metric_data['value']:.2f}x
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Content Grid -->
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                        
+                                        <!-- Left Column: Status & Severity -->
                                         <div>
-                                            <span style="font-weight: bold; color: {text_color};">Severity:</span>
-                                            <span style="background-color: {main_color}; color: white; padding: 3px 8px; 
-                                                       border-radius: 4px; font-size: 12px; margin-left: 5px;">
-                                            {metric_data['severity']}
-                                            </span>
+                                            <div style="margin-bottom: 10px;">
+                                                <span style="font-weight: bold; color: {text_color};">Status:</span>
+                                                <span style="color: {text_color}; margin-left: 5px;">{signal_emoji} {metric_data['status']}</span>
+                                            </div>
+                                            <div>
+                                                <span style="font-weight: bold; color: {text_color};">Severity:</span>
+                                                <span style="background-color: {main_color}; color: white; padding: 3px 8px; 
+                                                           border-radius: 4px; font-size: 12px; margin-left: 5px;">
+                                                {metric_data['severity']}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Right Column: Reasoning -->
+                                        <div>
+                                            <div style="font-weight: bold; color: {text_color}; margin-bottom: 5px;">💡 Reasoning:</div>
+                                            <div style="color: {text_color}; font-size: 13px; line-height: 1.6;">
+                                            {metric_data['reasoning']}
+                                            </div>
                                         </div>
                                     </div>
                                     
-                                    <!-- Right Column: Reasoning -->
-                                    <div>
-                                        <div style="font-weight: bold; color: {text_color}; margin-bottom: 5px;">💡 Reasoning:</div>
-                                        <div style="color: {text_color}; font-size: 13px; line-height: 1.6;">
-                                        {metric_data['reasoning']}
+                                    <!-- Valuation Level Bar -->
+                                    <div style="margin-top: 12px;">
+                                        <div style="font-weight: bold; color: {text_color}; font-size: 12px; margin-bottom: 5px;">
+                                        Valuation Level:
+                                        </div>
+                                        <div style="width: 100%; height: 8px; background-color: #e0e0e0; border-radius: 4px; overflow: hidden;">
+                                            <div style="width: {min(max((metric_data['value'] / 30) * 100, 5), 100)}%; height: 100%; 
+                                                       background: linear-gradient(90deg, #2ecc71 0%, #f1c40f 50%, #e74c3c 100%);">
+                                            </div>
+                                        </div>
+                                        <div style="font-size: 10px; color: #666; margin-top: 4px; display: flex; justify-content: space-between;">
+                                            <span>Low</span>
+                                            <span>Fair</span>
+                                            <span>High</span>
                                         </div>
                                     </div>
                                 </div>
+                                """, unsafe_allow_html=True)
+                            
+                            st.markdown("---")
+                            
+                            # -------- VALUATION SCORE CARDS --------
+                            st.markdown('<div style="font-weight: bold; color: #003366; margin: 20px 0 15px 0; font-size: 14px;">📊 VALUATION SCORE BREAKDOWN</div>', unsafe_allow_html=True)
+                            
+                            score_col1, score_col2, score_col3, score_col4 = st.columns(4)
+                            
+                            undervalued_count = signal_analysis['undervalued_count']
+                            fair_count = signal_analysis['fair_count']
+                            overvalued_count = signal_analysis['overvalued_count']
+                            total_metrics = undervalued_count + fair_count + overvalued_count
+                            
+                            with score_col1:
+                                st.markdown(f"""
+                                <div style="background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 28px; font-weight: bold; color: #28a745;">🟢</div>
+                                    <div style="font-weight: bold; color: #155724; margin: 8px 0;">Undervalued</div>
+                                    <div style="font-size: 24px; font-weight: bold; color: #28a745;">{undervalued_count}</div>
+                                    <div style="font-size: 11px; color: #155724; margin-top: 5px;">
+                                    {(undervalued_count/total_metrics)*100:.0f}% of metrics
+                                    </div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            
+                            with score_col2:
+                                st.markdown(f"""
+                                <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 28px; font-weight: bold;">🟡</div>
+                                    <div style="font-weight: bold; color: #856404; margin: 8px 0;">Fair Valued</div>
+                                    <div style="font-size: 24px; font-weight: bold; color: #ffc107;">{fair_count}</div>
+                                    <div style="font-size: 11px; color: #856404; margin-top: 5px;">
+                                    {(fair_count/total_metrics)*100:.0f}% of metrics
+                                    </div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            
+                            with score_col3:
+                                st.markdown(f"""
+                                <div style="background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 28px; font-weight: bold;">🔴</div>
+                                    <div style="font-weight: bold; color: #721c24; margin: 8px 0;">Overvalued</div>
+                                    <div style="font-size: 24px; font-weight: bold; color: #dc3545;">{overvalued_count}</div>
+                                    <div style="font-size: 11px; color: #721c24; margin-top: 5px;">
+                                    {(overvalued_count/total_metrics)*100:.0f}% of metrics
+                                    </div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            
+                            with score_col4:
+                                st.markdown(f"""
+                                <div style="background-color: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; border-radius: 6px; text-align: center;">
+                                    <div style="font-size: 28px; font-weight: bold;">📊</div>
+                                    <div style="font-weight: bold; color: #0d47a1; margin: 8px 0;">Total Metrics</div>
+                                    <div style="font-size: 24px; font-weight: bold; color: #2196f3;">{total_metrics}</div>
+                                    <div style="font-size: 11px; color: #0d47a1; margin-top: 5px;">
+                                    Analyzed
+                                    </div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            
+                            st.markdown("---")
+                            
+                            # -------- INVESTMENT RECOMMENDATION --------
+                            st.markdown('<div style="font-weight: bold; color: #003366; margin: 20px 0 15px 0; font-size: 14px;">💡 INVESTMENT RECOMMENDATION</div>', unsafe_allow_html=True)
+                            
+                            if "UNDERVALUED" in signal_analysis['overall']:
+                                recommendation_text = """
+                                **🟢 BUY SIGNAL**
                                 
-                                <!-- Valuation Level Bar -->
-                                <div style="margin-top: 12px;">
-                                    <div style="font-weight: bold; color: {text_color}; font-size: 12px; margin-bottom: 5px;">
-                                    Valuation Level:
-                                    </div>
-                                    <div style="width: 100%; height: 8px; background-color: #e0e0e0; border-radius: 4px; overflow: hidden;">
-                                        <div style="width: {min(max((metric_data['value'] / 30) * 100, 5), 100)}%; height: 100%; 
-                                                   background: linear-gradient(90deg, #2ecc71 0%, #f1c40f 50%, #e74c3c 100%);">
-                                        </div>
-                                    </div>
-                                    <div style="font-size: 10px; color: #666; margin-top: 4px; display: flex; justify-content: space-between;">
-                                        <span>Low</span>
-                                        <span>Fair</span>
-                                        <span>High</span>
-                                    </div>
-                                </div>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        
-                        st.markdown("---")
-                        
-                        # -------- VALUATION SCORE CARDS --------
-                        st.markdown('<div style="font-weight: bold; color: #003366; margin: 20px 0 15px 0; font-size: 14px;">📊 VALUATION SCORE BREAKDOWN</div>', unsafe_allow_html=True)
-                        
-                        score_col1, score_col2, score_col3, score_col4 = st.columns(4)
-                        
-                        undervalued_count = signal_analysis['undervalued_count']
-                        fair_count = signal_analysis['fair_count']
-                        overvalued_count = signal_analysis['overvalued_count']
-                        total_metrics = undervalued_count + fair_count + overvalued_count
-                        
-                        with score_col1:
+                                The stock appears undervalued across multiple metrics. Potential for upside returns.
+                                
+                                *Suitable for:*
+                                - Value investors
+                                - Contrarian investors
+                                - Long-term holders
+                                - Risk-tolerant investors
+                                """
+                                rec_color = "#d4edda"
+                                rec_border = "#28a745"
+                                icon_color = "#28a745"
+                            
+                            elif "FAIRLY" in signal_analysis['overall']:
+                                recommendation_text = """
+                                **🟡 HOLD SIGNAL**
+                                
+                                The stock is trading at reasonable valuations. Balanced risk-reward profile.
+                                
+                                *Suitable for:*
+                                - Income investors
+                                - Conservative investors
+                                - Current holders
+                                - Moderate growth seekers
+                                """
+                                rec_color = "#fff3cd"
+                                rec_border = "#ffc107"
+                                icon_color = "#ffc107"
+                            
+                            else:
+                                recommendation_text = """
+                                **🔴 SELL SIGNAL**
+                                
+                                The stock appears overvalued on multiple metrics. Limited upside, significant downside risk.
+                                
+                                *Suitable for:*
+                                - Risk-averse investors
+                                - Profit-takers
+                                - Short-term traders
+                                - Those seeking better valuations
+                                """
+                                rec_color = "#f8d7da"
+                                rec_border = "#dc3545"
+                                icon_color = "#dc3545"
+                            
                             st.markdown(f"""
-                            <div style="background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px; border-radius: 6px; text-align: center;">
-                                <div style="font-size: 28px; font-weight: bold; color: #28a745;">🟢</div>
-                                <div style="font-weight: bold; color: #155724; margin: 8px 0;">Undervalued</div>
-                                <div style="font-size: 24px; font-weight: bold; color: #28a745;">{undervalued_count}</div>
-                                <div style="font-size: 11px; color: #155724; margin-top: 5px;">
-                                {(undervalued_count/total_metrics)*100:.0f}% of metrics
+                            <div style="background-color: {rec_color}; border-left: 5px solid {rec_border}; padding: 20px; border-radius: 8px;">
+                            {recommendation_text}
+                            </div>
+                            """, unsafe_allow_html=True)
+                            
+                            st.markdown("---")
+                            
+                            # Disclaimer
+                            st.markdown("""
+                            <div style="background-color: #f0f0f0; padding: 15px; border-radius: 6px; border-left: 4px solid #666;">
+                                <div style="font-weight: bold; color: #333; margin-bottom: 8px;">⚠️ IMPORTANT DISCLAIMER</div>
+                                <div style="font-size: 12px; color: #555; line-height: 1.7;">
+                                This analysis is based on historical thresholds and valuation ratios and is purely educational. 
+                                It should not be considered financial advice. Always conduct your own due diligence, analyze company fundamentals, 
+                                market conditions, and consult with qualified financial advisors before making investment decisions. 
+                                Past performance is not indicative of future results. Stocks involve risk, including potential loss of principal.
                                 </div>
                             </div>
                             """, unsafe_allow_html=True)
-                        
-                        with score_col2:
-                            st.markdown(f"""
-                            <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 6px; text-align: center;">
-                                <div style="font-size: 28px; font-weight: bold;">🟡</div>
-                                <div style="font-weight: bold; color: #856404; margin: 8px 0;">Fair Valued</div>
-                                <div style="font-size: 24px; font-weight: bold; color: #ffc107;">{fair_count}</div>
-                                <div style="font-size: 11px; color: #856404; margin-top: 5px;">
-                                {(fair_count/total_metrics)*100:.0f}% of metrics
-                                </div>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        
-                        with score_col3:
-                            st.markdown(f"""
-                            <div style="background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; border-radius: 6px; text-align: center;">
-                                <div style="font-size: 28px; font-weight: bold;">🔴</div>
-                                <div style="font-weight: bold; color: #721c24; margin: 8px 0;">Overvalued</div>
-                                <div style="font-size: 24px; font-weight: bold; color: #dc3545;">{overvalued_count}</div>
-                                <div style="font-size: 11px; color: #721c24; margin-top: 5px;">
-                                {(overvalued_count/total_metrics)*100:.0f}% of metrics
-                                </div>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        
-                        with score_col4:
-                            st.markdown(f"""
-                            <div style="background-color: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; border-radius: 6px; text-align: center;">
-                                <div style="font-size: 28px; font-weight: bold;">📊</div>
-                                <div style="font-weight: bold; color: #0d47a1; margin: 8px 0;">Total Metrics</div>
-                                <div style="font-size: 24px; font-weight: bold; color: #2196f3;">{total_metrics}</div>
-                                <div style="font-size: 11px; color: #0d47a1; margin-top: 5px;">
-                                Analyzed
-                                </div>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        
-                        st.markdown("---")
-                        
-                        # -------- INVESTMENT RECOMMENDATION --------
-                        st.markdown('<div style="font-weight: bold; color: #003366; margin: 20px 0 15px 0; font-size: 14px;">💡 INVESTMENT RECOMMENDATION</div>', unsafe_allow_html=True)
-                        
-                        if "UNDERVALUED" in signal_analysis['overall']:
-                            recommendation_text = """
-                            **🟢 BUY SIGNAL**
-                            
-                            The stock appears undervalued across multiple metrics. Potential for upside returns.
-                            
-                            *Suitable for:*
-                            - Value investors
-                            - Contrarian investors
-                            - Long-term holders
-                            - Risk-tolerant investors
-                            """
-                            rec_color = "#d4edda"
-                            rec_border = "#28a745"
-                            icon_color = "#28a745"
-                        
-                        elif "FAIRLY" in signal_analysis['overall']:
-                            recommendation_text = """
-                            **🟡 HOLD SIGNAL**
-                            
-                            The stock is trading at reasonable valuations. Balanced risk-reward profile.
-                            
-                            *Suitable for:*
-                            - Income investors
-                            - Conservative investors
-                            - Current holders
-                            - Moderate growth seekers
-                            """
-                            rec_color = "#fff3cd"
-                            rec_border = "#ffc107"
-                            icon_color = "#ffc107"
-                        
-                        else:
-                            recommendation_text = """
-                            **🔴 SELL SIGNAL**
-                            
-                            The stock appears overvalued on multiple metrics. Limited upside, significant downside risk.
-                            
-                            *Suitable for:*
-                            - Risk-averse investors
-                            - Profit-takers
-                            - Short-term traders
-                            - Those seeking better valuations
-                            """
-                            rec_color = "#f8d7da"
-                            rec_border = "#dc3545"
-                            icon_color = "#dc3545"
-                        
-                        st.markdown(f"""
-                        <div style="background-color: {rec_color}; border-left: 5px solid {rec_border}; padding: 20px; border-radius: 8px;">
-                        {recommendation_text}
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        st.markdown("---")
-                        
-                        # Disclaimer
-                        st.markdown("""
-                        <div style="background-color: #f0f0f0; padding: 15px; border-radius: 6px; border-left: 4px solid #666;">
-                            <div style="font-weight: bold; color: #333; margin-bottom: 8px;">⚠️ IMPORTANT DISCLAIMER</div>
-                            <div style="font-size: 12px; color: #555; line-height: 1.7;">
-                            This analysis is based on historical thresholds and valuation ratios and is purely educational. 
-                            It should not be considered financial advice. Always conduct your own due diligence, analyze company fundamentals, 
-                            market conditions, and consult with qualified financial advisors before making investment decisions. 
-                            Past performance is not indicative of future results. Stocks involve risk, including potential loss of principal.
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
 
             except Exception as e:
                 st.error(f"Error: {str(e)}")
