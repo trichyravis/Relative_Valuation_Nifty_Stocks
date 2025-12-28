@@ -597,13 +597,28 @@ with st.sidebar:
 # ANALYSIS MODE: SINGLE STOCK ANALYSIS
 # ============================================================================
 if analysis_mode == "Single Stock Analysis":
+    # Enhanced stock selection header
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #1a4d7a 0%, #2d6fa3 100%); 
+                padding: 20px; border-radius: 12px; margin-bottom: 20px;
+                border-left: 6px solid #ffd700; box-shadow: 0 4px 15px rgba(0, 51, 102, 0.3);">
+        <h2 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: bold;">
+            🔍 SELECT YOUR STOCK
+        </h2>
+        <p style="color: #b0d4ff; margin: 8px 0 0 0; font-size: 13px;">
+            Choose from 50 NIFTY companies to analyze valuations
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     col1, col2 = st.columns([2, 1])
     
     with col1:
         selected_ticker = st.selectbox(
-            "Select Stock:",
+            "📊 **Select Stock From List:**",
             list(NIFTY_50_DATA.keys()),
-            format_func=lambda x: f"{NIFTY_50_DATA[x]['Company']} ({x})"
+            format_func=lambda x: f"🏢 {NIFTY_50_DATA[x]['Company']} ({x})",
+            label_visibility="visible"
         )
     
     with col2:
