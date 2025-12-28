@@ -1,3 +1,4 @@
+
 """
 THE MOUNTAIN PATH - WORLD OF FINANCE
 Dynamic Relative Valuation Model for Indian Nifty Stocks
@@ -513,16 +514,44 @@ with header_col1:
     """, unsafe_allow_html=True)
 
 with header_col2:
+    # Try to load the mountain banner image
     try:
-        from PIL import Image
-        img = Image.open('/mnt/user-data/outputs/mountain_path.png')
-        st.image(img, use_column_width=True, caption='')
-    except:
+        import os
+        # Try multiple possible paths
+        image_paths = [
+            'mountain_banner.png',
+            './mountain_banner.png',
+            'streamlit_app/mountain_banner.png',
+        ]
+        
+        image_loaded = False
+        for img_path in image_paths:
+            if os.path.exists(img_path):
+                st.image(img_path, use_column_width=True)
+                image_loaded = True
+                break
+        
+        if not image_loaded:
+            # Fallback: Display styled box
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, #1a4d7a 0%, #0d2d4d 100%); padding: 50px 20px; 
+                        border-radius: 10px; color: white; text-align: center; min-height: 240px; 
+                        display: flex; align-items: center; justify-content: center;">
+                <div>
+                    <div style="font-size: 48px; margin-bottom: 10px;">🏔️</div>
+                    <p style="font-size: 14px; margin: 0;">Mountain Path<br>World of Finance</p>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+    except Exception as e:
         st.markdown("""
-        <div style="background: linear-gradient(135deg, #003366 0%, #004d7a 100%); padding: 30px; 
-                    border-radius: 10px; color: white; text-align: center; height: 240px; 
+        <div style="background: linear-gradient(135deg, #1a4d7a 0%, #0d2d4d 100%); padding: 50px 20px; 
+                    border-radius: 10px; color: white; text-align: center; min-height: 240px; 
                     display: flex; align-items: center; justify-content: center;">
-            <p style="font-size: 14px;">🏔️ Mountain Path Symbol</p>
+            <div>
+                <div style="font-size: 48px; margin-bottom: 10px;">🏔️</div>
+                <p style="font-size: 14px; margin: 0;">Mountain Path<br>World of Finance</p>
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
