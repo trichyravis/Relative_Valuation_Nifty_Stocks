@@ -790,9 +790,29 @@ if analysis_mode == "Single Stock Analysis":
             }
             st.table(pd.DataFrame(perf_data))
         
+        with col3:
+            st.markdown("### 🎯 VALUATION SIGNAL")
+            
+            # Get detailed valuation analysis
+            signal_analysis = analyze_valuation_signal(
+                metrics.get('P/E Ratio'),
+                metrics.get('P/B Ratio'),
+                metrics.get('P/S Ratio'),
+                metrics.get('EV/EBITDA')
+            )
+            
+            # Display overall sentiment
+            st.markdown(f"""
+            <div style="background-color: #f0f0f0; padding: 15px; border-radius: 8px; border-left: 5px solid #003366;">
+                <div style="font-size: 18px; font-weight: bold; color: #003366; margin-bottom: 10px;">
+                {signal_analysis['overall']}
+                </div>
+                <div style="font-size: 13px; color: #555;">
+                {signal_analysis['recommendation']}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
-
-        
         st.markdown("---")
         
         # Price Chart
