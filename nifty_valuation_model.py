@@ -1089,7 +1089,16 @@ if analysis_mode == "Single Stock Analysis":
                                         else:
                                             st.info("P/S multiple not available due to missing revenue")
                                     
-
+                                    with tab4:
+                                        st.markdown("##### **EV/EBITDA Multiple Analysis**")
+                                        
+                                        # Show data quality warning if EV/EBITDA was derived
+                                        ev_ebitda_from_metrics = metrics.get('EV/EBITDA')
+                                        if ev_ebitda_from_metrics is not None and ev_ebitda_from_metrics > 50:
+                                            pe_val = metrics.get('P/E Ratio', 20)
+                                            st.warning(f"⚠️ Data Note: EV/EBITDA ratio from source ({ev_ebitda_from_metrics:.2f}x) appears unusually high. Using derived estimate ({pe_val * 0.85:.2f}x) for calculation.")
+                                        elif ev_ebitda_from_metrics is None:
+                                            st.info("ℹ️ EV/EBITDA data not available from source. Deriving from P/E ratio for calculation.")
                                         
                                         if company_financials['ebitda'] and company_financials['ebitda'] > 0:
                                             ev_results = calculate_implied_valuation(
