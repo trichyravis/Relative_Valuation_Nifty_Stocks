@@ -1035,114 +1035,114 @@ if analysis_mode == "Single Stock Analysis":
                                         else:
                                             st.info("P/B multiple not available due to missing book value")
                                     
-                                    with tab3:
-                                        st.markdown("##### **Price-to-Sales Multiple Analysis**")
+                                        with tab3:
+                                            st.markdown("##### **Price-to-Sales Multiple Analysis**")
                                         
-                                        # Show data quality warning if P/S was sanitized
-                                        ps_from_metrics = metrics.get('P/S Ratio')
-                                        if ps_from_metrics is not None and ps_from_metrics > 20:
-                                            st.warning(f"⚠️ Data Note: P/S ratio from source ({ps_from_metrics:.2f}x) appears unusually high. Using conservative estimate (3.0x) for calculation.")
-                                        elif ps_from_metrics is None:
-                                            st.info("ℹ️ P/S data not available from source. Using sector estimate for calculation.")
+                                            # Show data quality warning if P/S was sanitized
+                                            ps_from_metrics = metrics.get('P/S Ratio')
+                                            if ps_from_metrics is not None and ps_from_metrics > 20:
+                                                st.warning(f"⚠️ Data Note: P/S ratio from source ({ps_from_metrics:.2f}x) appears unusually high. Using conservative estimate (3.0x) for calculation.")
+                                            elif ps_from_metrics is None:
+                                                st.info("ℹ️ P/S data not available from source. Using sector estimate for calculation.")
                                         
-                                        if company_financials['revenue'] and company_financials['revenue'] > 0:
-                                            ps_results = calculate_implied_valuation(
-                                                company_financials, 
-                                                sector_multiples['multiples'], 
-                                                'P/S'
-                                            )
+                                            if company_financials['revenue'] and company_financials['revenue'] > 0:
+                                                ps_results = calculate_implied_valuation(
+                                                    company_financials, 
+                                                    sector_multiples['multiples'], 
+                                                    'P/S'
+                                                )
                                             
-                                            if ps_results:
-                                                col_ps1, col_ps2, col_ps3, col_ps4 = st.columns(4)
+                                                if ps_results:
+                                                    col_ps1, col_ps2, col_ps3, col_ps4 = st.columns(4)
                                                 
-                                                for idx, (method, result) in enumerate(ps_results.items()):
-                                                    with [col_ps1, col_ps2, col_ps3, col_ps4][idx]:
-                                                        color = '#90EE90' if result['upside_downside'] > 0 else '#FFB6C6'
-                                                        st.markdown(f"""
-                                                        <div style="background-color: {color}; padding: 12px; border-radius: 6px; text-align: center;">
-                                                            <b>{method.upper()}</b><br>
-                                                            Multiple: {result['multiple']:.2f}x<br>
-                                                            <span style="font-size: 18px; font-weight: bold;">₹{result['implied_price']:.0f}</span><br>
-                                                            <span style="font-size: 12px;">{result['upside_downside']:+.1f}%</span>
-                                                        </div>
-                                                        """, unsafe_allow_html=True)
+                                                    for idx, (method, result) in enumerate(ps_results.items()):
+                                                        with [col_ps1, col_ps2, col_ps3, col_ps4][idx]:
+                                                            color = '#90EE90' if result['upside_downside'] > 0 else '#FFB6C6'
+                                                            st.markdown(f"""
+                                                            <div style="background-color: {color}; padding: 12px; border-radius: 6px; text-align: center;">
+                                                                <b>{method.upper()}</b><br>
+                                                                Multiple: {result['multiple']:.2f}x<br>
+                                                                <span style="font-size: 18px; font-weight: bold;">₹{result['implied_price']:.0f}</span><br>
+                                                                <span style="font-size: 12px;">{result['upside_downside']:+.1f}%</span>
+                                                            </div>
+                                                            """, unsafe_allow_html=True)
                                                 
-                                                st.markdown("---")
+                                                    st.markdown("---")
                                                 
-                                                col_ps_left, col_ps_right = st.columns(2)
+                                                    col_ps_left, col_ps_right = st.columns(2)
                                                 
-                                                with col_ps_left:
-                                                    st.markdown("**Sector P/S Range**")
-                                                    ps_range = sector_multiples['multiples']['P/S']
-                                                    st.write(f"High: {ps_range['high']:.2f}x")
-                                                    st.write(f"Average: {ps_range['avg']:.2f}x")
-                                                    st.write(f"Median: {ps_range['median']:.2f}x")
-                                                    st.write(f"Low: {ps_range['low']:.2f}x")
+                                                    with col_ps_left:
+                                                        st.markdown("**Sector P/S Range**")
+                                                        ps_range = sector_multiples['multiples']['P/S']
+                                                        st.write(f"High: {ps_range['high']:.2f}x")
+                                                        st.write(f"Average: {ps_range['avg']:.2f}x")
+                                                        st.write(f"Median: {ps_range['median']:.2f}x")
+                                                        st.write(f"Low: {ps_range['low']:.2f}x")
                                                 
-                                                with col_ps_right:
-                                                    st.markdown("**Current Stock**")
-                                                    st.write(f"Current P/S: {metrics.get('P/S Ratio', 'N/A'):.2f}x" if metrics.get('P/S Ratio') else "Current P/S: N/A")
-                                                    st.write(f"Current Price: ₹{company_financials['share_price']:.0f}")
-                                                    median_val = ps_results['median']['implied_price']
-                                                    st.write(f"Median Implied: ₹{median_val:.0f}")
-                                                    st.write(f"Upside/Downside: {ps_results['median']['upside_downside']:+.1f}%")
-                                        else:
-                                            st.info("P/S multiple not available due to missing revenue")
+                                                    with col_ps_right:
+                                                        st.markdown("**Current Stock**")
+                                                        st.write(f"Current P/S: {metrics.get('P/S Ratio', 'N/A'):.2f}x" if metrics.get('P/S Ratio') else "Current P/S: N/A")
+                                                        st.write(f"Current Price: ₹{company_financials['share_price']:.0f}")
+                                                        median_val = ps_results['median']['implied_price']
+                                                        st.write(f"Median Implied: ₹{median_val:.0f}")
+                                                        st.write(f"Upside/Downside: {ps_results['median']['upside_downside']:+.1f}%")
+                                            else:
+                                                st.info("P/S multiple not available due to missing revenue")
                                     
-                                    with tab4:
-                                        st.markdown("##### **EV/EBITDA Multiple Analysis**")
+                                        with tab4:
+                                            st.markdown("##### **EV/EBITDA Multiple Analysis**")
                                         
-                                        # Show data quality warning if EV/EBITDA was derived
-                                        ev_ebitda_from_metrics = metrics.get('EV/EBITDA')
-                                        if ev_ebitda_from_metrics is not None and ev_ebitda_from_metrics > 50:
-                                            pe_val = metrics.get('P/E Ratio', 20)
-                                            st.warning(f"⚠️ Data Note: EV/EBITDA ratio from source ({ev_ebitda_from_metrics:.2f}x) appears unusually high. Using derived estimate ({pe_val * 0.85:.2f}x) for calculation.")
-                                        elif ev_ebitda_from_metrics is None:
-                                            st.info("ℹ️ EV/EBITDA data not available from source. Deriving from P/E ratio for calculation.")
+                                            # Show data quality warning if EV/EBITDA was derived
+                                            ev_ebitda_from_metrics = metrics.get('EV/EBITDA')
+                                            if ev_ebitda_from_metrics is not None and ev_ebitda_from_metrics > 50:
+                                                pe_val = metrics.get('P/E Ratio', 20)
+                                                st.warning(f"⚠️ Data Note: EV/EBITDA ratio from source ({ev_ebitda_from_metrics:.2f}x) appears unusually high. Using derived estimate ({pe_val * 0.85:.2f}x) for calculation.")
+                                            elif ev_ebitda_from_metrics is None:
+                                                st.info("ℹ️ EV/EBITDA data not available from source. Deriving from P/E ratio for calculation.")
                                         
-                                        if company_financials['ebitda'] and company_financials['ebitda'] > 0:
-                                            ev_results = calculate_implied_valuation(
-                                                company_financials, 
-                                                sector_multiples['multiples'], 
-                                                'EV/EBITDA'
-                                            )
+                                            if company_financials['ebitda'] and company_financials['ebitda'] > 0:
+                                                ev_results = calculate_implied_valuation(
+                                                    company_financials, 
+                                                    sector_multiples['multiples'], 
+                                                    'EV/EBITDA'
+                                                )
                                             
-                                            if ev_results:
-                                                col_ev1, col_ev2, col_ev3, col_ev4 = st.columns(4)
+                                                if ev_results:
+                                                    col_ev1, col_ev2, col_ev3, col_ev4 = st.columns(4)
                                                 
-                                                for idx, (method, result) in enumerate(ev_results.items()):
-                                                    with [col_ev1, col_ev2, col_ev3, col_ev4][idx]:
-                                                        color = '#90EE90' if result['upside_downside'] > 0 else '#FFB6C6'
-                                                        st.markdown(f"""
-                                                        <div style="background-color: {color}; padding: 12px; border-radius: 6px; text-align: center;">
-                                                            <b>{method.upper()}</b><br>
-                                                            Multiple: {result['multiple']:.2f}x<br>
-                                                            <span style="font-size: 18px; font-weight: bold;">₹{result['implied_price']:.0f}</span><br>
-                                                            <span style="font-size: 12px;">{result['upside_downside']:+.1f}%</span>
-                                                        </div>
-                                                        """, unsafe_allow_html=True)
+                                                    for idx, (method, result) in enumerate(ev_results.items()):
+                                                        with [col_ev1, col_ev2, col_ev3, col_ev4][idx]:
+                                                            color = '#90EE90' if result['upside_downside'] > 0 else '#FFB6C6'
+                                                            st.markdown(f"""
+                                                            <div style="background-color: {color}; padding: 12px; border-radius: 6px; text-align: center;">
+                                                                <b>{method.upper()}</b><br>
+                                                                Multiple: {result['multiple']:.2f}x<br>
+                                                                <span style="font-size: 18px; font-weight: bold;">₹{result['implied_price']:.0f}</span><br>
+                                                                <span style="font-size: 12px;">{result['upside_downside']:+.1f}%</span>
+                                                            </div>
+                                                            """, unsafe_allow_html=True)
                                                 
-                                                st.markdown("---")
+                                                    st.markdown("---")
                                                 
-                                                col_ev_left, col_ev_right = st.columns(2)
+                                                    col_ev_left, col_ev_right = st.columns(2)
                                                 
-                                                with col_ev_left:
-                                                    st.markdown("**Sector EV/EBITDA Range**")
-                                                    ev_range = sector_multiples['multiples']['EV/EBITDA']
-                                                    st.write(f"High: {ev_range['high']:.2f}x")
-                                                    st.write(f"Average: {ev_range['avg']:.2f}x")
-                                                    st.write(f"Median: {ev_range['median']:.2f}x")
-                                                    st.write(f"Low: {ev_range['low']:.2f}x")
+                                                    with col_ev_left:
+                                                        st.markdown("**Sector EV/EBITDA Range**")
+                                                        ev_range = sector_multiples['multiples']['EV/EBITDA']
+                                                        st.write(f"High: {ev_range['high']:.2f}x")
+                                                        st.write(f"Average: {ev_range['avg']:.2f}x")
+                                                        st.write(f"Median: {ev_range['median']:.2f}x")
+                                                        st.write(f"Low: {ev_range['low']:.2f}x")
                                                 
-                                                with col_ev_right:
-                                                    st.markdown("**Current Stock**")
-                                                    st.write(f"Current EV/EBITDA: {metrics.get('EV/EBITDA', 'N/A'):.2f}x" if metrics.get('EV/EBITDA') else "Current EV/EBITDA: N/A")
-                                                    st.write(f"Current Price: ₹{company_financials['share_price']:.0f}")
-                                                    median_val = ev_results['median']['implied_price']
-                                                    st.write(f"Median Implied: ₹{median_val:.0f}")
-                                                    st.write(f"Upside/Downside: {ev_results['median']['upside_downside']:+.1f}%")
-                                        else:
-                                            st.info("EV/EBITDA multiple not available due to missing EBITDA")
+                                                    with col_ev_right:
+                                                        st.markdown("**Current Stock**")
+                                                        st.write(f"Current EV/EBITDA: {metrics.get('EV/EBITDA', 'N/A'):.2f}x" if metrics.get('EV/EBITDA') else "Current EV/EBITDA: N/A")
+                                                        st.write(f"Current Price: ₹{company_financials['share_price']:.0f}")
+                                                        median_val = ev_results['median']['implied_price']
+                                                        st.write(f"Median Implied: ₹{median_val:.0f}")
+                                                        st.write(f"Upside/Downside: {ev_results['median']['upside_downside']:+.1f}%")
+                                            else:
+                                                st.info("EV/EBITDA multiple not available due to missing EBITDA")
                                     
                                     st.markdown("---")
                                     st.markdown("""
