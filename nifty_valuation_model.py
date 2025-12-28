@@ -419,166 +419,155 @@ if analysis_mode == "Single Stock Analysis":
         
         if hist_data is not None and len(hist_data) > 0:
             try:
-                # Robust data preparation
+                # Handle yfinance MultiIndex columns (crucial fix!)
                 chart_data = hist_data.copy()
                 
-                # Reset index - handle both datetime and non-datetime indices
-                if hasattr(chart_data.index, 'name'):
-                    index_name = chart_data.index.name if chart_data.index.name else 'Date'
+                # Flatten MultiIndex columns if present
+                if isinstance(chart_data.columns, pd.MultiIndex):
+                    chart_data.columns = [col[0] if isinstance(col, tuple) else col for col in chart_data.columns]
+                
+                # Ensure we have the Close column
+                if 'Close' not in chart_data.columns:
+                    st.error("❌ Close price data not available for this stock")
                 else:
-                    index_name = 'Date'
-                
-                chart_data = chart_data.reset_index()
-                
-                # Ensure we have a Date column
-                date_cols = [col for col in chart_data.columns if col.lower() in ['date', 'datetime', 'time']]
-                if date_cols:
-                    date_col = date_cols[0]
-                    chart_data = chart_data.rename(columns={date_col: 'Date'})
-                elif 'index' in chart_data.columns:
-                    chart_data = chart_data.rename(columns={'index': 'Date'})
-                
-                # Ensure Date column is datetime
-                if 'Date' in chart_data.columns:
-                    chart_data['Date'] = pd.to_datetime(chart_data['Date'])
-                
-                # Ensure Close price is numeric
-                chart_data['Close'] = pd.to_numeric(chart_data['Close'], errors='coerce')
-                
-                # Remove any NaN rows
-                chart_data = chart_data.dropna(subset=['Close'])
-                
-                # Sort by date ascending
-                chart_data = chart_data.sort_values('Date').reset_index(drop=True)
-                
-                # Only proceed if we have data
-                if len(chart_data) == 0:
-                    st.warning("No valid price data available for selected period.")
-                else:
-                    # Calculate moving averages with proper handling
-                    chart_data['MA20'] = chart_data['Close'].rolling(window=20, min_periods=1).mean()
-                    chart_data['MA50'] = chart_data['Close'].rolling(window=50, min_periods=1).mean()
+                    # Reset index to make dates a regular column
+                    chart_data = chart_data.reset_index()
                     
-                    # Get price range for better Y-axis display
-                    price_min = chart_data['Close'].min()
-                    price_max = chart_data['Close'].max()
-                    price_range = price_max - price_min
-                    y_padding = price_range * 0.1
+                    # Handle date column naming
+                    if 'Date' not in chart_data.columns and 'index' in chart_data.columns:
+                        chart_data = chart_data.rename(columns={'index': 'Date'})
                     
-                    # Create figure
-                    fig = go.Figure()
+                    # Ensure proper data types
+                    if 'Date' in chart_data.columns:
+                        chart_data['Date'] = pd.to_datetime(chart_data['Date'])
                     
-                    # Add Close Price line
-                    fig.add_trace(go.Scatter(
-                        x=chart_data['Date'],
-                        y=chart_data['Close'],
-                        name='Close Price',
-                        line=dict(color='#003366', width=3),
-                        mode='lines',
-                        fill=None,
-                        hovertemplate='<b>Date:</b> %{x|%d %b %Y}<br><b>Close Price:</b> ₹%{y:,.2f}<extra></extra>'
-                    ))
+                    chart_data['Close'] = pd.to_numeric(chart_data['Close'], errors='coerce')
                     
-                    # Add 20-Day MA
-                    fig.add_trace(go.Scatter(
-                        x=chart_data['Date'],
-                        y=chart_data['MA20'],
-                        name='20-Day MA',
-                        line=dict(color='#4472C4', width=2, dash='dash'),
-                        mode='lines',
-                        hovertemplate='<b>Date:</b> %{x|%d %b %Y}<br><b>20-Day MA:</b> ₹%{y:,.2f}<extra></extra>'
-                    ))
+                    # Remove invalid rows
+                    chart_data = chart_data.dropna(subset=['Date', 'Close'])
                     
-                    # Add 50-Day MA
-                    fig.add_trace(go.Scatter(
-                        x=chart_data['Date'],
-                        y=chart_data['MA50'],
-                        name='50-Day MA',
-                        line=dict(color='#FF7C1F', width=2, dash='dash'),
-                        mode='lines',
-                        hovertemplate='<b>Date:</b> %{x|%d %b %Y}<br><b>50-Day MA:</b> ₹%{y:,.2f}<extra></extra>'
-                    ))
+                    # Sort chronologically
+                    chart_data = chart_data.sort_values('Date').reset_index(drop=True)
                     
-                    # Update layout with professional styling
-                    fig.update_layout(
-                        title=dict(
-                            text=f'<b>{company_name} - Stock Price Technical Analysis</b>',
-                            x=0.05,
-                            xanchor='left',
-                            font=dict(size=16, color='#003366', family='Arial')
-                        ),
-                        xaxis=dict(
-                            title='Date',
-                            showgrid=True,
-                            gridwidth=1,
-                            gridcolor='#e8e8e8',
-                            showline=True,
-                            linewidth=2,
-                            linecolor='#003366',
-                            zeroline=False,
-                            tickformat='%d %b %Y'
-                        ),
-                        yaxis=dict(
-                            title='Price (₹)',
-                            showgrid=True,
-                            gridwidth=1,
-                            gridcolor='#e8e8e8',
-                            showline=True,
-                            linewidth=2,
-                            linecolor='#003366',
-                            zeroline=False,
-                            tickformat=',.0f',
-                            range=[price_min - y_padding, price_max + y_padding]
-                        ),
-                        template='plotly_white',
-                        hovermode='x unified',
-                        height=550,
-                        margin=dict(l=70, r=50, t=80, b=70),
-                        font=dict(family="Arial, sans-serif", size=12),
-                        plot_bgcolor='white',
-                        paper_bgcolor='white',
-                        legend=dict(
-                            x=0.02,
-                            y=0.98,
-                            bgcolor='rgba(255, 255, 255, 0.9)',
-                            bordercolor='#003366',
-                            borderwidth=2,
-                            font=dict(size=11)
-                        ),
-                        showlegend=True
-                    )
-                    
-                    # Display chart
-                    st.plotly_chart(fig, use_container_width=True)
-                    
-                    # Add summary statistics below chart
-                    st.markdown("### 📊 Price Statistics")
-                    col1, col2, col3, col4, col5 = st.columns(5)
-                    
-                    with col1:
-                        st.metric("Current Price", f"₹{chart_data['Close'].iloc[-1]:,.2f}")
-                    with col2:
-                        st.metric("52-Week High", f"₹{chart_data['Close'].max():,.2f}")
-                    with col3:
-                        st.metric("52-Week Low", f"₹{chart_data['Close'].min():,.2f}")
-                    with col4:
-                        avg_price = chart_data['Close'].mean()
-                        st.metric("Average Price", f"₹{avg_price:,.2f}")
-                    with col5:
-                        volatility = chart_data['Close'].pct_change().std() * 100
-                        st.metric("Volatility %", f"{volatility:.2f}%")
-                    
+                    if len(chart_data) == 0:
+                        st.warning("⚠️ No valid price data available for selected period")
+                    else:
+                        # Calculate moving averages
+                        chart_data['MA20'] = chart_data['Close'].rolling(window=20, min_periods=1).mean()
+                        chart_data['MA50'] = chart_data['Close'].rolling(window=50, min_periods=1).mean()
+                        
+                        # Calculate price range for optimal Y-axis
+                        min_price = chart_data['Close'].min()
+                        max_price = chart_data['Close'].max()
+                        price_padding = (max_price - min_price) * 0.15
+                        
+                        # Create Plotly figure
+                        fig = go.Figure()
+                        
+                        # Close Price trace
+                        fig.add_trace(go.Scatter(
+                            x=chart_data['Date'],
+                            y=chart_data['Close'],
+                            name='Close Price',
+                            line=dict(color='#003366', width=3.5),
+                            mode='lines',
+                            hovertemplate='<b>%{x|%d %b %Y}</b><br>Price: ₹%{y:,.2f}<extra></extra>'
+                        ))
+                        
+                        # 20-Day MA trace
+                        fig.add_trace(go.Scatter(
+                            x=chart_data['Date'],
+                            y=chart_data['MA20'],
+                            name='20-Day MA',
+                            line=dict(color='#4472C4', width=2, dash='dash'),
+                            mode='lines',
+                            hovertemplate='<b>20-Day MA:</b> ₹%{y:,.2f}<extra></extra>'
+                        ))
+                        
+                        # 50-Day MA trace
+                        fig.add_trace(go.Scatter(
+                            x=chart_data['Date'],
+                            y=chart_data['MA50'],
+                            name='50-Day MA',
+                            line=dict(color='#FF7C1F', width=2, dash='dot'),
+                            mode='lines',
+                            hovertemplate='<b>50-Day MA:</b> ₹%{y:,.2f}<extra></extra>'
+                        ))
+                        
+                        # Layout configuration
+                        fig.update_layout(
+                            title=f'<b>{company_name} - Technical Analysis</b>',
+                            xaxis_title='Date',
+                            yaxis_title='Price (₹)',
+                            template='plotly_white',
+                            height=520,
+                            hovermode='x unified',
+                            margin=dict(l=80, r=60, t=80, b=80),
+                            xaxis=dict(
+                                showgrid=True,
+                                gridwidth=1,
+                                gridcolor='#f0f0f0',
+                                showline=True,
+                                linewidth=1.5,
+                                linecolor='#003366'
+                            ),
+                            yaxis=dict(
+                                showgrid=True,
+                                gridwidth=1,
+                                gridcolor='#f0f0f0',
+                                showline=True,
+                                linewidth=1.5,
+                                linecolor='#003366',
+                                tickformat=',',
+                                range=[min_price - price_padding, max_price + price_padding]
+                            ),
+                            legend=dict(
+                                x=0.02,
+                                y=0.98,
+                                bgcolor='rgba(255,255,255,0.95)',
+                                bordercolor='#003366',
+                                borderwidth=1.5,
+                                font=dict(size=11)
+                            ),
+                            plot_bgcolor='rgba(255,255,255,1)',
+                            paper_bgcolor='rgba(255,255,255,1)',
+                            font=dict(family='Arial, sans-serif', size=12, color='#003366')
+                        )
+                        
+                        st.plotly_chart(fig, use_container_width=True)
+                        
+                        # Price Statistics
+                        st.markdown("### 📊 Price Statistics")
+                        
+                        col1, col2, col3, col4, col5 = st.columns(5)
+                        
+                        current = chart_data['Close'].iloc[-1]
+                        highest = chart_data['Close'].max()
+                        lowest = chart_data['Close'].min()
+                        avg = chart_data['Close'].mean()
+                        volatility = (chart_data['Close'].pct_change().std() * 100)
+                        
+                        with col1:
+                            st.metric("Current Price", f"₹{current:,.0f}")
+                        with col2:
+                            st.metric("Period High", f"₹{highest:,.0f}")
+                        with col3:
+                            st.metric("Period Low", f"₹{lowest:,.0f}")
+                        with col4:
+                            st.metric("Avg Price", f"₹{avg:,.0f}")
+                        with col5:
+                            st.metric("Volatility", f"{volatility:.2f}%")
+                        
             except Exception as e:
-                st.error(f"❌ Error rendering chart: {str(e)}")
-                st.info(f"**Troubleshooting Tips:**\n- Try a different time period (3mo, 6mo, 1y)\n- Ensure internet connection is stable\n- Refresh the page and try again")
-                # Show raw data for debugging
-                if hist_data is not None:
-                    with st.expander("🔍 Debug Info"):
-                        st.write(f"Data points fetched: {len(hist_data)}")
+                st.error(f"❌ Error: {str(e)}")
+                st.info("Try selecting a different time period or refreshing the page")
+                with st.expander("🔍 Debug"):
+                    st.write(f"Data shape: {hist_data.shape if hist_data is not None else 'None'}")
+                    if hist_data is not None:
                         st.write(f"Columns: {list(hist_data.columns)}")
                         st.write(hist_data.head())
         else:
-            st.warning("📊 Unable to fetch historical data. Please try:\n- Selecting a different time period\n- Refreshing the page\n- Checking your internet connection")
+            st.warning("📊 No historical data available")
 
 # ============================================================================
 # ANALYSIS MODE: SECTOR COMPARISON
