@@ -52,6 +52,99 @@ st.markdown("""
         background-color: #f8f9fa;
     }
     
+    /* SIDEBAR STYLING - Professional Dark Navy */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #1a4d7a 0%, #0d2d4d 100%) !important;
+    }
+    
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+        padding-top: 20px;
+    }
+    
+    /* Sidebar Text */
+    [data-testid="stSidebar"] .stMarkdown {
+        color: #ffffff !important;
+    }
+    
+    [data-testid="stSidebar"] h1, 
+    [data-testid="stSidebar"] h2, 
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] p {
+        color: #ffffff !important;
+    }
+    
+    /* Sidebar Dividers */
+    [data-testid="stSidebar"] hr {
+        border-color: #4a7ba7 !important;
+        margin: 20px 0 !important;
+    }
+    
+    /* Sidebar Title Styling */
+    .sidebar-title {
+        color: #ffffff;
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #4a7ba7;
+    }
+    
+    .sidebar-subtitle {
+        color: #b3d9ff;
+        font-size: 12px;
+        margin-bottom: 15px;
+        font-style: italic;
+    }
+    
+    .sidebar-section {
+        margin-bottom: 25px;
+    }
+    
+    .sidebar-option {
+        color: #ffffff;
+        font-size: 14px;
+        margin: 8px 0;
+    }
+    
+    .sidebar-author {
+        background-color: rgba(255,255,255,0.05);
+        padding: 15px;
+        border-radius: 6px;
+        margin-top: 20px;
+        color: #ffffff;
+        text-align: center;
+        border-left: 3px solid #FFD700;
+    }
+    
+    .sidebar-author-name {
+        font-weight: bold;
+        color: #FFD700;
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+    
+    .sidebar-author-text {
+        color: #b3d9ff;
+        font-size: 12px;
+        line-height: 1.6;
+    }
+    
+    .sidebar-button {
+        background-color: #1e5a96 !important;
+        color: #FFD700 !important;
+        border: 2px solid #FFD700 !important;
+        padding: 10px 15px !important;
+        border-radius: 6px !important;
+        text-align: center !important;
+        font-weight: bold !important;
+        margin-top: 15px !important;
+        width: 100% !important;
+    }
+    
+    .sidebar-button:hover {
+        background-color: #2d73b3 !important;
+    }
+    
     .stTitle {
         color: #003366;
         font-weight: bold;
@@ -502,18 +595,34 @@ st.markdown("""
 # SIDEBAR CONTROLS
 # ============================================================================
 with st.sidebar:
-    st.markdown("### ⚙️ ANALYSIS PARAMETERS")
+    # Professional Header
+    st.markdown("""
+    <div style="text-align: center; padding: 20px 0;">
+        <div style="font-size: 28px; margin-bottom: 5px;">📊</div>
+        <h1 style="color: white; font-size: 18px; margin: 0; font-weight: bold;">RELATIVE VALUATION</h1>
+        <p style="color: #b3d9ff; font-size: 11px; margin: 8px 0;">Advanced Comparable Multiples Framework</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # Select Mode Section
+    st.markdown('<div class="sidebar-title">Select Mode:</div>', unsafe_allow_html=True)
     
     analysis_mode = st.radio(
-        "Select Analysis Mode:",
+        "Analysis Mode",
         ["Single Stock Analysis", "Sector Comparison", "Multi-Stock Comparison", 
          "Relative Valuation Matrix"],
+        label_visibility="collapsed",
         help="Choose how you want to analyze stocks"
     )
     
+    # Time Period Selection
+    st.markdown('<div class="sidebar-title">Time Period:</div>', unsafe_allow_html=True)
     period = st.selectbox(
-        "Select Time Period:",
+        "Select Time Period",
         ["1mo", "3mo", "6mo", "1y", "2y", "5y"],
+        label_visibility="collapsed",
         help="Historical data period for charts"
     )
     
@@ -521,6 +630,76 @@ with st.sidebar:
     sectors.sort()
     
     st.markdown("---")
+    
+    # About This Tool Section
+    st.markdown('<div class="sidebar-title">About This Tool</div>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style="color: #ffffff; font-size: 13px; line-height: 1.8; margin-bottom: 15px;">
+    This platform uses the <b>Comparable Multiples Framework</b>:
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style="color: #ffffff; font-size: 12px; margin-bottom: 3px;">
+    <span style="color: #FF6B6B; font-weight: bold;">📊</span> <b>Valuation</b> - P/E, P/B, P/S Multiples
+    </div>
+    <div style="color: #ffffff; font-size: 12px; margin-bottom: 3px;">
+    <span style="color: #4ECDC4; font-weight: bold;">⚙️</span> <b>EV/EBITDA</b> - Enterprise Value Analysis
+    </div>
+    <div style="color: #ffffff; font-size: 12px; margin-bottom: 3px;">
+    <span style="color: #FFE66D; font-weight: bold;">🎯</span> <b>Sector Peers</b> - Comparable Companies
+    </div>
+    <div style="color: #ffffff; font-size: 12px; margin-bottom: 3px;">
+    <span style="color: #95E1D3; font-weight: bold;">📈</span> <b>Implied Prices</b> - Fair Value Estimates
+    </div>
+    <div style="color: #ffffff; font-size: 12px; margin-bottom: 15px;">
+    <span style="color: #A8E6CF; font-weight: bold;">🔍</span> <b>Investment Signals</b> - Buy/Hold/Sell
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # Author Info
+    st.markdown("""
+    <div class="sidebar-author">
+        <div class="sidebar-author-name">Prof. V. Ravichandran</div>
+        <div class="sidebar-author-text">
+        📚 28+ Years Corporate Finance & Banking Experience<br>
+        🎓 10+ Years Academic Excellence<br>
+        🏆 The Mountain Path - World of Finance
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # LinkedIn Button
+    st.markdown("""
+    <div style="margin-top: 15px;">
+        <a href="https://www.linkedin.com/in/vravichandran/" target="_blank" 
+           style="display: block; background-color: #1e5a96; color: #FFD700; 
+                  border: 2px solid #FFD700; padding: 10px 15px; border-radius: 6px; 
+                  text-align: center; font-weight: bold; text-decoration: none; 
+                  font-size: 12px;">
+        🔗 LinkedIn Profile
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # Key Features
+    st.markdown('<div class="sidebar-title">Key Features</div>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style="color: #b3d9ff; font-size: 12px; line-height: 1.8;">
+    ✅ Real-time valuation multiples<br>
+    ✅ Sector peer comparison<br>
+    ✅ Implied price calculation<br>
+    ✅ Investment recommendations<br>
+    ✅ Risk assessment<br>
+    ✅ Multi-stock analysis
+    </div>
+    """, unsafe_allow_html=True)
 
 # ============================================================================
 # ANALYSIS MODE: SINGLE STOCK ANALYSIS
