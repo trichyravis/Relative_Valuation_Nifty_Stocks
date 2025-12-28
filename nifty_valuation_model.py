@@ -1057,13 +1057,212 @@ if analysis_mode == "Single Stock Analysis":
             st.warning("No historical data available")
 
 elif analysis_mode == "Sector Comparison":
-    st.markdown("### Sector Comparison Coming Soon...")
+    st.markdown("### 📊 SECTOR COMPARISON ANALYSIS")
+    st.markdown("---")
+    
+    # Select sector
+    sectors = sorted(list(set([data['Sector'] for data in NIFTY_50_DATA.values()])))
+    selected_sector = st.selectbox("Select Sector:", sectors)
+    
+    # Get all stocks in sector
+    sector_stocks = [(ticker, data['Company']) for ticker, data in NIFTY_50_DATA.items() 
+                     if data['Sector'] == selected_sector]
+    
+    if sector_stocks:
+        st.write(f"**Stocks in {selected_sector} Sector:** {len(sector_stocks)}")
+        
+        # Fetch data for all stocks in sector
+        sector_data = []
+        with st.spinner(f"Analyzing {selected_sector} sector..."):
+            for ticker, company_name in sector_stocks:
+                info = fetch_stock_info(ticker)
+                if info:
+                    sector_data.append({
+                        'Company': company_name,
+                        'Ticker': ticker,
+                        'Price': info.get('currentPrice'),
+                        'P/E': info.get('trailingPE'),
+                        'P/B': info.get('priceToBook'),
+                        'P/S': info.get('priceToSalesTrailing12Months'),
+                        'Market Cap (B)': info.get('marketCap', 0) / 1e9 if info.get('marketCap') else 0,
+                    })
+        
+        if sector_data:
+            df_sector = pd.DataFrame(sector_data)
+            
+            # Display comparison table
+            st.markdown("**Sector Stocks Valuation Comparison:**")
+            st.dataframe(
+                df_sector.style.format({
+                    'Price': '₹{:.0f}',
+                    'P/E': '{:.2f}x',
+                    'P/B': '{:.2f}x',
+                    'P/S': '{:.2f}x',
+                    'Market Cap (B)': '₹{:.0f}B'
+                }),
+                use_container_width=True,
+                hide_index=True
+            )
+            
+            # Sector averages
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                avg_pe = df_sector['P/E'].mean()
+                st.metric("Avg P/E", f"{avg_pe:.2f}x" if pd.notna(avg_pe) else "N/A")
+            
+            with col2:
+                avg_pb = df_sector['P/B'].mean()
+                st.metric("Avg P/B", f"{avg_pb:.2f}x" if pd.notna(avg_pb) else "N/A")
+            
+            with col3:
+                avg_ps = df_sector['P/S'].mean()
+                st.metric("Avg P/S", f"{avg_ps:.2f}x" if pd.notna(avg_ps) else "N/A")
+            
+            with col4:
+                total_market_cap = df_sector['Market Cap (B)'].sum()
+                st.metric("Total Mkt Cap", f"₹{total_market_cap:.0f}B")
+            
+            st.markdown("---")
+            st.info("**Insight:** Stocks with P/E, P/B, P/S below sector averages are relatively undervalued within the sector.")
 
 elif analysis_mode == "Multi-Stock Comparison":
-    st.markdown("### Multi-Stock Comparison Coming Soon...")
+    st.markdown("### 📊 MULTI-STOCK COMPARISON")
+    st.markdown("---")
+    
+    # Select multiple stocks
+    all_tickers = [ticker for ticker in NIFTY_50_DATA.keys()]
+    all_companies = [f"{ticker} - {NIFTY_50_DATA[ticker]['Company']}" for ticker in all_tickers]
+    
+    selected_companies = st.multiselect(
+        "Select stocks to compare (choose 2-5 stocks):",
+        all_companies,
+        default=[all_companies[0], all_companies[1]]
+    )
+    
+    if selected_companies:
+        selected_tickers = [comp.split(" - ")[0] for comp in selected_companies]
+        
+        # Fetch data for selected stocks
+        comparison_data = []
+        with st.spinner("Analyzing selected stocks..."):
+            for ticker in selected_tickers:
+                info = fetch_stock_info(ticker)
+                if info:
+                    comparison_data.append({
+                        'Company': NIFTY_50_DATA[ticker]['Company'],
+                        'Ticker': ticker,
+                        'Sector': NIFTY_50_DATA[ticker]['Sector'],
+                        'Price': info.get('currentPrice'),
+                        'P/E': info.get('trailingPE'),
+                        'P/B': info.get('priceToBook'),
+                        'P/S': info.get('priceToSalesTrailing12Months'),
+                        'Dividend Yield %': info.get('dividendYield', 0) * 100 if info.get('dividendYield') else 0,
+                    })
+        
+        if comparison_data:
+            df_compare = pd.DataFrame(comparison_data)
+            
+            st.markdown("**Multi-Stock Comparison Table:**")
+            st.dataframe(
+                df_compare.style.format({
+                    'Price': '₹{:.0f}',
+                    'P/E': '{:.2f}x',
+                    'P/B': '{:.2f}x',
+                    'P/S': '{:.2f}x',
+                    'Dividend Yield %': '{:.2f}%'
+                }),
+                use_container_width=True,
+                hide_index=True
+            )
+            
+            # Comparative metrics
+            st.markdown("**Comparative Analysis:**")
+            
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                min_pe_stock = df_compare.loc[df_compare['P/E'].idxmin(), 'Company']
+                min_pe = df_compare['P/E'].min()
+                st.write(f"**Lowest P/E:** {min_pe_stock}\n{min_pe:.2f}x")
+            
+            with col2:
+                min_pb_stock = df_compare.loc[df_compare['P/B'].idxmin(), 'Company']
+                min_pb = df_compare['P/B'].min()
+                st.write(f"**Lowest P/B:** {min_pb_stock}\n{min_pb:.2f}x")
+            
+            with col3:
+                max_div_stock = df_compare.loc[df_compare['Dividend Yield %'].idxmax(), 'Company']
+                max_div = df_compare['Dividend Yield %'].max()
+                st.write(f"**Highest Dividend:** {max_div_stock}\n{max_div:.2f}%")
+            
+            st.markdown("---")
+            st.success(f"Comparing {len(selected_tickers)} stocks across key valuation metrics.")
 
-else:
-    st.markdown("### Relative Valuation Matrix Coming Soon...")
+else:  # Relative Valuation Matrix
+    st.markdown("### 📊 RELATIVE VALUATION MATRIX")
+    st.markdown("---")
+    
+    st.write("**All NIFTY 50 Stocks Valuation Matrix**")
+    
+    # Fetch all stocks data
+    all_matrix_data = []
+    with st.spinner("Building valuation matrix for all NIFTY 50 stocks..."):
+        for ticker in NIFTY_50_DATA.keys():
+            info = fetch_stock_info(ticker)
+            if info:
+                all_matrix_data.append({
+                    'Ticker': ticker,
+                    'Company': NIFTY_50_DATA[ticker]['Company'],
+                    'Sector': NIFTY_50_DATA[ticker]['Sector'],
+                    'Price': info.get('currentPrice'),
+                    'P/E': info.get('trailingPE'),
+                    'P/B': info.get('priceToBook'),
+                    'EV/EBITDA': info.get('enterpriseToEbitda'),
+                })
+    
+    if all_matrix_data:
+        df_matrix = pd.DataFrame(all_matrix_data)
+        
+        # Filter by sector if needed
+        sectors = sorted(df_matrix['Sector'].unique())
+        sector_filter = st.selectbox("Filter by Sector (optional):", ["All Sectors"] + sectors)
+        
+        if sector_filter != "All Sectors":
+            df_matrix = df_matrix[df_matrix['Sector'] == sector_filter]
+        
+        st.markdown(f"**Showing {len(df_matrix)} stocks**")
+        
+        st.dataframe(
+            df_matrix.style.format({
+                'Price': '₹{:.0f}',
+                'P/E': '{:.2f}x',
+                'P/B': '{:.2f}x',
+                'EV/EBITDA': '{:.2f}x'
+            }),
+            use_container_width=True,
+            hide_index=True
+        )
+        
+        # Summary statistics
+        st.markdown("**Matrix Summary Statistics:**")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("Median P/E", f"{df_matrix['P/E'].median():.2f}x")
+        
+        with col2:
+            st.metric("Median P/B", f"{df_matrix['P/B'].median():.2f}x")
+        
+        with col3:
+            st.metric("Median EV/EBITDA", f"{df_matrix['EV/EBITDA'].median():.2f}x")
+        
+        with col4:
+            st.metric("Total Stocks", len(df_matrix))
+        
+        st.markdown("---")
+        st.info("Use this matrix to identify undervalued and overvalued stocks across the entire NIFTY 50 index.")
 
 # ============================================================================
 # FOOTER
