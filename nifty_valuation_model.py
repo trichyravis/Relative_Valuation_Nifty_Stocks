@@ -182,6 +182,8 @@ NIFTY_50_DATA = {
     'MAHSCOOTER.NS': {'Company': 'Mahindra & Mahindra', 'Sector': 'Automobiles'},
     'LUPIN.NS': {'Company': 'Lupin', 'Sector': 'Pharmaceuticals'},
     'APOLLOHOSP.NS': {'Company': 'Apollo Hospitals', 'Sector': 'Healthcare'},
+    'BPCL.NS': {'Company': 'Bharat Petroleum', 'Sector': 'Energy & Utilities'},
+    'HINDALCO.NS': {'Company': 'Hindalco Industries', 'Sector': 'Metals & Mining'},
 }
 
 # ============================================================================
