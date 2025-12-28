@@ -419,130 +419,74 @@ if analysis_mode == "Single Stock Analysis":
         
         if hist_data is not None and len(hist_data) > 0:
             try:
-                # Debug: Show what we got from yfinance
-                st.write(f"DEBUG: Columns type: {type(hist_data.columns)}")
-                st.write(f"DEBUG: Columns: {list(hist_data.columns)}")
+                # SUPER SIMPLE approach - just get the data
+                import yfinance as yf
                 
-                chart_data = hist_data.copy()
+                # Re-fetch to ensure clean data
+                raw_data = yf.download(selected_ticker, period=period, progress=False)
                 
-                # Try to access Close column directly
-                close_col = None
-                
-                # Method 1: Direct access if MultiIndex
-                if isinstance(chart_data.columns, pd.MultiIndex):
-                    # Get all Close columns
-                    close_cols = [col for col in chart_data.columns if col[0] == 'Close']
-                    if close_cols:
-                        close_col = close_cols[0]
-                        # Get just the Close data
-                        chart_data = pd.DataFrame({
-                            'Date': hist_data.index,
-                            'Close': hist_data[close_col].values
-                        })
-                # Method 2: Simple column access
-                elif 'Close' in chart_data.columns:
-                    chart_data = chart_data[['Close']].copy()
-                    chart_data['Date'] = hist_data.index
-                
-                if chart_data is None or len(chart_data) == 0:
-                    st.error("❌ Could not extract Close price data")
+                if raw_data is None or len(raw_data) == 0:
+                    st.warning("⚠️ No data available")
                 else:
-                    # Ensure Date column
-                    if 'Date' not in chart_data.columns:
-                        chart_data['Date'] = chart_data.index
-                    
-                    # Convert to proper types
-                    chart_data['Date'] = pd.to_datetime(chart_data['Date'])
-                    chart_data['Close'] = pd.to_numeric(chart_data['Close'], errors='coerce')
-                    
-                    # Remove NaN values
-                    chart_data = chart_data.dropna(subset=['Close']).reset_index(drop=True)
-                    
-                    # Sort by date
-                    chart_data = chart_data.sort_values('Date').reset_index(drop=True)
-                    
-                    st.write(f"DEBUG: Final data shape: {chart_data.shape}")
-                    st.write(f"DEBUG: Close values sample: {chart_data['Close'].head().tolist()}")
-                    
-                    if len(chart_data) < 2:
-                        st.error("❌ Not enough data points")
+                    # Extract close prices - handle both MultiIndex and regular columns
+                    if isinstance(raw_data.columns, pd.MultiIndex):
+                        close_prices = raw_data[('Close', selected_ticker)]
                     else:
-                        # Calculate moving averages
-                        chart_data['MA20'] = chart_data['Close'].rolling(window=20, min_periods=1).mean()
-                        chart_data['MA50'] = chart_data['Close'].rolling(window=50, min_periods=1).mean()
+                        close_prices = raw_data['Close']
+                    
+                    # Create simple dataframe
+                    df = pd.DataFrame({
+                        'Date': close_prices.index,
+                        'Close': close_prices.values
+                    })
+                    
+                    # Convert to numeric and remove NaN
+                    df['Close'] = pd.to_numeric(df['Close'], errors='coerce')
+                    df = df.dropna()
+                    df = df.sort_values('Date')
+                    
+                    if len(df) < 2:
+                        st.error("Not enough data points")
+                    else:
+                        # Calculate MAs
+                        df['MA20'] = df['Close'].rolling(20).mean()
+                        df['MA50'] = df['Close'].rolling(50).mean()
                         
-                        # Remove any remaining NaN from MAs
-                        chart_data['MA20'] = chart_data['MA20'].fillna(method='bfill').fillna(method='ffill')
-                        chart_data['MA50'] = chart_data['MA50'].fillna(method='bfill').fillna(method='ffill')
-                        
-                        # Calculate price range
-                        min_price = chart_data['Close'].min()
-                        max_price = chart_data['Close'].max()
-                        price_padding = (max_price - min_price) * 0.15 if (max_price - min_price) > 0 else max_price * 0.1
-                        
-                        # Create figure
+                        # Create chart
                         fig = go.Figure()
                         
-                        # Add traces
-                        fig.add_trace(go.Scatter(
-                            x=chart_data['Date'],
-                            y=chart_data['Close'],
-                            name='Close Price',
-                            line=dict(color='#003366', width=3),
-                            mode='lines'
-                        ))
+                        fig.add_trace(go.Scatter(x=df['Date'], y=df['Close'], name='Close Price', line=dict(color='#003366', width=3)))
+                        fig.add_trace(go.Scatter(x=df['Date'], y=df['MA20'], name='20-Day MA', line=dict(color='#4472C4', width=2, dash='dash')))
+                        fig.add_trace(go.Scatter(x=df['Date'], y=df['MA50'], name='50-Day MA', line=dict(color='#FF7C1F', width=2, dash='dot')))
                         
-                        fig.add_trace(go.Scatter(
-                            x=chart_data['Date'],
-                            y=chart_data['MA20'],
-                            name='20-Day MA',
-                            line=dict(color='#4472C4', width=2, dash='dash'),
-                            mode='lines'
-                        ))
-                        
-                        fig.add_trace(go.Scatter(
-                            x=chart_data['Date'],
-                            y=chart_data['MA50'],
-                            name='50-Day MA',
-                            line=dict(color='#FF7C1F', width=2, dash='dot'),
-                            mode='lines'
-                        ))
-                        
-                        # Update layout
                         fig.update_layout(
-                            title=f'<b>{company_name} - Technical Analysis</b>',
+                            title=f'{company_name} - Stock Price Analysis',
                             xaxis_title='Date',
                             yaxis_title='Price (₹)',
                             template='plotly_white',
-                            height=500,
-                            hovermode='x unified',
-                            margin=dict(l=80, r=60, t=80, b=80),
-                            yaxis=dict(tickformat=','),
-                            legend=dict(x=0.02, y=0.98, bgcolor='rgba(255,255,255,0.9)', bordercolor='#003366', borderwidth=1)
+                            height=450,
+                            hovermode='x unified'
                         )
                         
                         st.plotly_chart(fig, use_container_width=True)
                         
-                        # Statistics
+                        # Stats
                         st.markdown("### 📊 Price Statistics")
                         col1, col2, col3, col4, col5 = st.columns(5)
                         with col1:
-                            st.metric("Current", f"₹{chart_data['Close'].iloc[-1]:,.0f}")
+                            st.metric("Current", f"₹{df['Close'].iloc[-1]:,.0f}")
                         with col2:
-                            st.metric("High", f"₹{max_price:,.0f}")
+                            st.metric("High", f"₹{df['Close'].max():,.0f}")
                         with col3:
-                            st.metric("Low", f"₹{min_price:,.0f}")
+                            st.metric("Low", f"₹{df['Close'].min():,.0f}")
                         with col4:
-                            st.metric("Average", f"₹{chart_data['Close'].mean():,.0f}")
+                            st.metric("Average", f"₹{df['Close'].mean():,.0f}")
                         with col5:
-                            vol = chart_data['Close'].pct_change().std() * 100
+                            vol = df['Close'].pct_change().std() * 100
                             st.metric("Volatility", f"{vol:.2f}%")
                         
             except Exception as e:
-                st.error(f"❌ Error: {str(e)}")
-                st.write(f"Full error details: {str(e)}")
-                with st.expander("📋 Raw Data"):
-                    st.write(hist_data)
+                st.error(f"Error: {str(e)}")
         else:
             st.warning("No data")
 
