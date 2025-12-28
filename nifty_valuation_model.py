@@ -838,61 +838,64 @@ if analysis_mode == "Single Stock Analysis":
                     st.markdown("**Implied Valuation vs Peer Multiples:**")
                     
                     current_price = metrics.get('Current Price', 0)
-                    shares_outstanding = info.get('sharesOutstanding', 1000000) / 1000000  # in millions
                     
                     implied_data = []
                     
-                    # P/E based valuation
-                    if metrics.get('P/E Ratio') and sector_pe_avg:
-                        pe_multiple = sector_pe_avg
-                        net_income = info.get('marketCap', 0) / (metrics.get('P/E Ratio', 1) or 1)
-                        implied_price_pe = net_income / shares_outstanding if shares_outstanding > 0 else current_price
-                        upside_pe = ((implied_price_pe - current_price) / current_price * 100) if current_price > 0 else 0
-                        implied_data.append({
-                            'Method': 'P/E Ratio',
-                            'Sector Multiple': f"{pe_multiple:.2f}x",
-                            'Implied Price': f"₹{implied_price_pe:.0f}",
-                            'Upside/Downside': f"{upside_pe:+.1f}%"
-                        })
+                    # P/E based valuation - CORRECTED
+                    if metrics.get('P/E Ratio') and sector_pe_avg and current_price > 0:
+                        current_pe = metrics.get('P/E Ratio', 1)
+                        if current_pe > 0:
+                            implied_price_pe = current_price * (sector_pe_avg / current_pe)
+                            upside_pe = ((implied_price_pe - current_price) / current_price * 100)
+                            implied_data.append({
+                                'Method': 'P/E Ratio',
+                                'Sector Multiple': f"{sector_pe_avg:.2f}x",
+                                'Current Multiple': f"{current_pe:.2f}x",
+                                'Implied Price': f"₹{implied_price_pe:.0f}",
+                                'Upside/Downside': f"{upside_pe:+.1f}%"
+                            })
                     
-                    # P/B based valuation
-                    if metrics.get('P/B Ratio') and sector_pb_avg:
-                        pb_multiple = sector_pb_avg
-                        book_value = info.get('marketCap', 0) / (metrics.get('P/B Ratio', 1) or 1)
-                        implied_price_pb = book_value / shares_outstanding if shares_outstanding > 0 else current_price
-                        upside_pb = ((implied_price_pb - current_price) / current_price * 100) if current_price > 0 else 0
-                        implied_data.append({
-                            'Method': 'P/B Ratio',
-                            'Sector Multiple': f"{pb_multiple:.2f}x",
-                            'Implied Price': f"₹{implied_price_pb:.0f}",
-                            'Upside/Downside': f"{upside_pb:+.1f}%"
-                        })
+                    # P/B based valuation - CORRECTED
+                    if metrics.get('P/B Ratio') and sector_pb_avg and current_price > 0:
+                        current_pb = metrics.get('P/B Ratio', 1)
+                        if current_pb > 0:
+                            implied_price_pb = current_price * (sector_pb_avg / current_pb)
+                            upside_pb = ((implied_price_pb - current_price) / current_price * 100)
+                            implied_data.append({
+                                'Method': 'P/B Ratio',
+                                'Sector Multiple': f"{sector_pb_avg:.2f}x",
+                                'Current Multiple': f"{current_pb:.2f}x",
+                                'Implied Price': f"₹{implied_price_pb:.0f}",
+                                'Upside/Downside': f"{upside_pb:+.1f}%"
+                            })
                     
-                    # P/S based valuation
-                    if metrics.get('P/S Ratio') and sector_ps_avg:
-                        ps_multiple = sector_ps_avg
-                        revenue = info.get('marketCap', 0) / (metrics.get('P/S Ratio', 1) or 1)
-                        implied_price_ps = revenue / shares_outstanding if shares_outstanding > 0 else current_price
-                        upside_ps = ((implied_price_ps - current_price) / current_price * 100) if current_price > 0 else 0
-                        implied_data.append({
-                            'Method': 'P/S Ratio',
-                            'Sector Multiple': f"{ps_multiple:.2f}x",
-                            'Implied Price': f"₹{implied_price_ps:.0f}",
-                            'Upside/Downside': f"{upside_ps:+.1f}%"
-                        })
+                    # P/S based valuation - CORRECTED
+                    if metrics.get('P/S Ratio') and sector_ps_avg and current_price > 0:
+                        current_ps = metrics.get('P/S Ratio', 1)
+                        if current_ps > 0:
+                            implied_price_ps = current_price * (sector_ps_avg / current_ps)
+                            upside_ps = ((implied_price_ps - current_price) / current_price * 100)
+                            implied_data.append({
+                                'Method': 'P/S Ratio',
+                                'Sector Multiple': f"{sector_ps_avg:.2f}x",
+                                'Current Multiple': f"{current_ps:.2f}x",
+                                'Implied Price': f"₹{implied_price_ps:.0f}",
+                                'Upside/Downside': f"{upside_ps:+.1f}%"
+                            })
                     
-                    # EV/EBITDA based valuation
-                    if metrics.get('EV/EBITDA') and sector_ev_avg:
-                        ev_multiple = sector_ev_avg
-                        ebitda = (info.get('marketCap', 0) + info.get('totalDebt', 0) - info.get('totalCash', 0)) / (metrics.get('EV/EBITDA', 1) or 1)
-                        implied_price_ev = ebitda / shares_outstanding if shares_outstanding > 0 else current_price
-                        upside_ev = ((implied_price_ev - current_price) / current_price * 100) if current_price > 0 else 0
-                        implied_data.append({
-                            'Method': 'EV/EBITDA',
-                            'Sector Multiple': f"{ev_multiple:.2f}x",
-                            'Implied Price': f"₹{implied_price_ev:.0f}",
-                            'Upside/Downside': f"{upside_ev:+.1f}%"
-                        })
+                    # EV/EBITDA based valuation - CORRECTED
+                    if metrics.get('EV/EBITDA') and sector_ev_avg and current_price > 0:
+                        current_ev = metrics.get('EV/EBITDA', 1)
+                        if current_ev > 0:
+                            implied_price_ev = current_price * (sector_ev_avg / current_ev)
+                            upside_ev = ((implied_price_ev - current_price) / current_price * 100)
+                            implied_data.append({
+                                'Method': 'EV/EBITDA',
+                                'Sector Multiple': f"{sector_ev_avg:.2f}x",
+                                'Current Multiple': f"{current_ev:.2f}x",
+                                'Implied Price': f"₹{implied_price_ev:.0f}",
+                                'Upside/Downside': f"{upside_ev:+.1f}%"
+                            })
                     
                     if implied_data:
                         df_implied = pd.DataFrame(implied_data)
