@@ -882,7 +882,12 @@ if analysis_mode == "Single Stock Analysis":
                                 book_value = market_cap_cr / pb_ratio if pb_ratio > 0 else 0
                                 
                                 # P/S = Market Cap / Revenue → Revenue = Market Cap / P/S
+                                # VALIDATE: P/S should be between 0.1x and 20x for most companies
                                 ps_ratio = metrics.get('P/S Ratio', 1) if metrics.get('P/S Ratio', 0) > 0 else 1
+                                # Sanitize P/S - if it's > 20, it's likely wrong data
+                                if ps_ratio > 20:
+                                    # Use a reasonable default based on sector
+                                    ps_ratio = 3.0  # Conservative estimate
                                 revenue = market_cap_cr / ps_ratio if ps_ratio > 0 else 0
                                 
                                 # EV/EBITDA = EV / EBITDA → EBITDA = EV / EV/EBITDA
@@ -890,6 +895,10 @@ if analysis_mode == "Single Stock Analysis":
                                 net_debt = (info.get('totalDebt', 0) - info.get('totalCash', 0)) / 10000000 if info.get('totalDebt') else 0
                                 ev = market_cap_cr + net_debt
                                 ev_ebitda_ratio = metrics.get('EV/EBITDA', 1) if metrics.get('EV/EBITDA', 0) > 0 else 1
+                                # Sanitize EV/EBITDA - if it's > 50, it's likely wrong data
+                                if ev_ebitda_ratio > 50:
+                                    # Use P/E as proxy: EV/EBITDA ≈ P/E * (1 - tax rate)
+                                    ev_ebitda_ratio = pe_ratio * 0.85  # Assume 15% tax rate
                                 ebitda = ev / ev_ebitda_ratio if ev_ebitda_ratio > 0 else 0
                                 
                                 # Shares outstanding from yfinance (in millions)
@@ -1023,6 +1032,11 @@ if analysis_mode == "Single Stock Analysis":
                                     with tab3:
                                         st.markdown("##### **Price-to-Sales Multiple Analysis**")
                                         
+                                        # Show data quality warning if P/S was sanitized
+                                        ps_from_metrics = metrics.get('P/S Ratio', 1)
+                                        if ps_from_metrics and ps_from_metrics > 20:
+                                            st.warning(f"⚠️ Data Note: P/S ratio from source ({ps_from_metrics:.2f}x) appears unusually high. Using conservative estimate (3.0x) for calculation.")
+                                        
                                         if company_financials['revenue'] and company_financials['revenue'] > 0:
                                             ps_results = calculate_implied_valuation(
                                                 company_financials, 
@@ -1069,6 +1083,12 @@ if analysis_mode == "Single Stock Analysis":
                                     
                                     with tab4:
                                         st.markdown("##### **EV/EBITDA Multiple Analysis**")
+                                        
+                                        # Show data quality warning if EV/EBITDA was sanitized
+                                        ev_ebitda_from_metrics = metrics.get('EV/EBITDA', 1)
+                                        if ev_ebitda_from_metrics and ev_ebitda_from_metrics > 50:
+                                            pe_val = metrics.get('P/E Ratio', 20)
+                                            st.warning(f"⚠️ Data Note: EV/EBITDA ratio from source ({ev_ebitda_from_metrics:.2f}x) appears unusually high. Using derived estimate ({pe_val * 0.85:.2f}x) for calculation.")
                                         
                                         if company_financials['ebitda'] and company_financials['ebitda'] > 0:
                                             ev_results = calculate_implied_valuation(
