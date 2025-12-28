@@ -500,32 +500,15 @@ def analyze_valuation_signal(pe, pb, ps, ev_ebitda, peg=None):
 # STREAMLIT INTERFACE
 # ============================================================================
 
-# Header with Mountain Path Image
-header_col1, header_col2 = st.columns([3, 2])
-
-with header_col1:
-    st.markdown("""
-    <div class="header-box" style="height: 100%; display: flex; flex-direction: column; justify-content: center;">
-        <h1 style="margin: 0 0 10px 0;">📊 THE MOUNTAIN PATH • WORLD OF FINANCE</h1>
-        <h3 style="margin: 0 0 10px 0;">Nifty Stock Relative Valuation Analysis Platform</h3>
-        <p style="margin: 0 0 10px 0;"><i>Dynamic Sector-wise Valuation Model with Risk Metrics</i></p>
-        <p style="margin: 0;">Prof. V. Ravichandran | 28+ Years Corporate Finance & Banking | 10+ Years Academic Excellence</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-with header_col2:
-    # Display styled banner box (since image file path won't work on Streamlit Cloud)
-    st.markdown("""
-    <div style="background: linear-gradient(135deg, #1a4d7a 0%, #0d2d4d 100%); padding: 60px 30px; 
-                border-radius: 10px; color: white; text-align: center; min-height: 240px; 
-                display: flex; align-items: center; justify-content: center; border: 3px solid #003366;">
-        <div>
-            <div style="font-size: 56px; margin-bottom: 15px;">🏔️</div>
-            <p style="font-size: 16px; font-weight: bold; margin: 0 0 5px 0;">Mountain Path</p>
-            <p style="font-size: 13px; margin: 0; color: #b0d4ff;">World of Finance</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+# Header
+st.markdown("""
+<div class="header-box">
+    <h1>📊 THE MOUNTAIN PATH • WORLD OF FINANCE</h1>
+    <h3>Nifty Stock Relative Valuation Analysis Platform</h3>
+    <p><i>Dynamic Sector-wise Valuation Model with Risk Metrics</i></p>
+    <p>Prof. V. Ravichandran | 28+ Years Corporate Finance & Banking | 10+ Years Academic Excellence</p>
+</div>
+""", unsafe_allow_html=True)
 
 st.markdown("---")
 
