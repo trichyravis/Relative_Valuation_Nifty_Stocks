@@ -883,22 +883,28 @@ if analysis_mode == "Single Stock Analysis":
                                 
                                 # P/S = Market Cap / Revenue → Revenue = Market Cap / P/S
                                 # VALIDATE: P/S should be between 0.1x and 20x for most companies
-                                ps_ratio = metrics.get('P/S Ratio', 1) if metrics.get('P/S Ratio', 0) > 0 else 1
-                                # Sanitize P/S - if it's > 20, it's likely wrong data
-                                if ps_ratio > 20:
-                                    # Use a reasonable default based on sector
-                                    ps_ratio = 3.0  # Conservative estimate
+                                ps_ratio_raw = metrics.get('P/S Ratio')
+                                # Check for None and handle it
+                                if ps_ratio_raw is None or ps_ratio_raw == 0:
+                                    ps_ratio = 3.0  # Default conservative estimate
+                                elif ps_ratio_raw > 20:  # Sanitize unrealistic values
+                                    ps_ratio = 3.0  # Use reasonable default
+                                else:
+                                    ps_ratio = ps_ratio_raw
                                 revenue = market_cap_cr / ps_ratio if ps_ratio > 0 else 0
                                 
                                 # EV/EBITDA = EV / EBITDA → EBITDA = EV / EV/EBITDA
                                 # EV = Market Cap + Net Debt
                                 net_debt = (info.get('totalDebt', 0) - info.get('totalCash', 0)) / 10000000 if info.get('totalDebt') else 0
                                 ev = market_cap_cr + net_debt
-                                ev_ebitda_ratio = metrics.get('EV/EBITDA', 1) if metrics.get('EV/EBITDA', 0) > 0 else 1
-                                # Sanitize EV/EBITDA - if it's > 50, it's likely wrong data
-                                if ev_ebitda_ratio > 50:
-                                    # Use P/E as proxy: EV/EBITDA ≈ P/E * (1 - tax rate)
-                                    ev_ebitda_ratio = pe_ratio * 0.85  # Assume 15% tax rate
+                                ev_ebitda_raw = metrics.get('EV/EBITDA')
+                                # Check for None and handle it
+                                if ev_ebitda_raw is None or ev_ebitda_raw == 0:
+                                    ev_ebitda_ratio = pe_ratio * 0.85  # Derive from P/E
+                                elif ev_ebitda_raw > 50:  # Sanitize unrealistic values
+                                    ev_ebitda_ratio = pe_ratio * 0.85  # Use P/E as proxy
+                                else:
+                                    ev_ebitda_ratio = ev_ebitda_raw
                                 ebitda = ev / ev_ebitda_ratio if ev_ebitda_ratio > 0 else 0
                                 
                                 # Shares outstanding from yfinance (in millions)
@@ -1033,9 +1039,11 @@ if analysis_mode == "Single Stock Analysis":
                                         st.markdown("##### **Price-to-Sales Multiple Analysis**")
                                         
                                         # Show data quality warning if P/S was sanitized
-                                        ps_from_metrics = metrics.get('P/S Ratio', 1)
-                                        if ps_from_metrics and ps_from_metrics > 20:
+                                        ps_from_metrics = metrics.get('P/S Ratio')
+                                        if ps_from_metrics is not None and ps_from_metrics > 20:
                                             st.warning(f"⚠️ Data Note: P/S ratio from source ({ps_from_metrics:.2f}x) appears unusually high. Using conservative estimate (3.0x) for calculation.")
+                                        elif ps_from_metrics is None:
+                                            st.info("ℹ️ P/S data not available from source. Using sector estimate for calculation.")
                                         
                                         if company_financials['revenue'] and company_financials['revenue'] > 0:
                                             ps_results = calculate_implied_valuation(
@@ -1081,14 +1089,7 @@ if analysis_mode == "Single Stock Analysis":
                                         else:
                                             st.info("P/S multiple not available due to missing revenue")
                                     
-                                    with tab4:
-                                        st.markdown("##### **EV/EBITDA Multiple Analysis**")
-                                        
-                                        # Show data quality warning if EV/EBITDA was sanitized
-                                        ev_ebitda_from_metrics = metrics.get('EV/EBITDA', 1)
-                                        if ev_ebitda_from_metrics and ev_ebitda_from_metrics > 50:
-                                            pe_val = metrics.get('P/E Ratio', 20)
-                                            st.warning(f"⚠️ Data Note: EV/EBITDA ratio from source ({ev_ebitda_from_metrics:.2f}x) appears unusually high. Using derived estimate ({pe_val * 0.85:.2f}x) for calculation.")
+
                                         
                                         if company_financials['ebitda'] and company_financials['ebitda'] > 0:
                                             ev_results = calculate_implied_valuation(
