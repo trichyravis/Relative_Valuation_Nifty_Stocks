@@ -869,17 +869,41 @@ if analysis_mode == "Single Stock Analysis":
                             
                             if sector_multiples:
                                 # Prepare financials dictionary
+                                # Get market cap in crores
+                                market_cap_cr = info.get('marketCap', 0) / 10000000 if info.get('marketCap') else 0
+                                
+                                # Back-calculate financial metrics from multiples
+                                # P/E = Market Cap / Net Income → Net Income = Market Cap / P/E
+                                pe_ratio = metrics.get('P/E Ratio', 1) if metrics.get('P/E Ratio', 0) > 0 else 1
+                                net_income = market_cap_cr / pe_ratio if pe_ratio > 0 else 0
+                                
+                                # P/B = Market Cap / Book Value → Book Value = Market Cap / P/B
+                                pb_ratio = metrics.get('P/B Ratio', 1) if metrics.get('P/B Ratio', 0) > 0 else 1
+                                book_value = market_cap_cr / pb_ratio if pb_ratio > 0 else 0
+                                
+                                # P/S = Market Cap / Revenue → Revenue = Market Cap / P/S
+                                ps_ratio = metrics.get('P/S Ratio', 1) if metrics.get('P/S Ratio', 0) > 0 else 1
+                                revenue = market_cap_cr / ps_ratio if ps_ratio > 0 else 0
+                                
+                                # EV/EBITDA = EV / EBITDA → EBITDA = EV / EV/EBITDA
+                                # EV = Market Cap + Net Debt
+                                net_debt = (info.get('totalDebt', 0) - info.get('totalCash', 0)) / 10000000 if info.get('totalDebt') else 0
+                                ev = market_cap_cr + net_debt
+                                ev_ebitda_ratio = metrics.get('EV/EBITDA', 1) if metrics.get('EV/EBITDA', 0) > 0 else 1
+                                ebitda = ev / ev_ebitda_ratio if ev_ebitda_ratio > 0 else 0
+                                
+                                # Shares outstanding from yfinance (in millions)
+                                shares_outstanding = info.get('sharesOutstanding', 0) / 1000000 if info.get('sharesOutstanding') else 1
+                                
                                 company_financials = {
-                                    'market_cap': info.get('marketCap', 0) / 10000000 if info.get('marketCap') else 0,
-                                    'net_income': metrics.get('Net Income (Implied)', 0) if 'Net Income (Implied)' in metrics else (
-                                        (info.get('currentPrice', info.get('regularMarketPrice', 0)) * info.get('sharesOutstanding', 0) / 100) if info.get('sharesOutstanding') else 0
-                                    ),
-                                    'book_value': (info.get('bookValue', 0) * info.get('sharesOutstanding', 0) / 10000000) if info.get('bookValue') and info.get('sharesOutstanding') else None,
-                                    'revenue': (info.get('marketCap', 0) / 10000000) / metrics.get('P/S Ratio', 1) if metrics.get('P/S Ratio') and info.get('marketCap') else 0,
-                                    'ebitda': (info.get('marketCap', 0) / 10000000) / metrics.get('EV/EBITDA', 1) if metrics.get('EV/EBITDA') and info.get('marketCap') else 0,
-                                    'shares_outstanding': info.get('sharesOutstanding', 0) / 10000000 if info.get('sharesOutstanding') else 0,
+                                    'market_cap': market_cap_cr,
+                                    'net_income': net_income,
+                                    'book_value': book_value,
+                                    'revenue': revenue,
+                                    'ebitda': ebitda,
+                                    'shares_outstanding': shares_outstanding,
                                     'share_price': info.get('currentPrice', info.get('regularMarketPrice', 0)),
-                                    'net_debt': (info.get('totalDebt', 0) - info.get('totalCash', 0)) if info.get('totalDebt') else 0
+                                    'net_debt': net_debt
                                 }
                                 
                                 # Get valuation summary
