@@ -1,3 +1,4 @@
+
 """
 COMPARABLE COMPANY MULTIPLES DATABASE
 Sector-wise valuation multiples for relative valuation
@@ -147,13 +148,13 @@ def calculate_implied_valuation(financials: dict, multiples: dict, multiple_type
     -----------
     financials : dict
         Target company financials {
-            'market_cap': float,
-            'net_income': float,
-            'book_value': float,
-            'revenue': float,
-            'ebitda': float,
-            'shares_outstanding': float,
-            'share_price': float
+            'market_cap': float (in crores),
+            'net_income': float (in crores),
+            'book_value': float (in crores),
+            'revenue': float (in crores),
+            'ebitda': float (in crores),
+            'shares_outstanding': float (in millions),
+            'share_price': float (in rupees)
         }
     
     multiples : dict
@@ -169,16 +170,33 @@ def calculate_implied_valuation(financials: dict, multiples: dict, multiple_type
     
     results = {}
     
+    # Convert shares from millions to actual number for calculation
+    shares_outstanding = financials.get('shares_outstanding', 1) * 10  # millions to crore equivalent
+    if shares_outstanding == 0:
+        shares_outstanding = 1
+    
     if multiple_type == 'P/E' and financials.get('net_income', 0) > 0:
-        # Market Cap = P/E × Net Income
-        current_pe = financials['market_cap'] / financials['net_income']
+        # P/E = Market Cap / Net Income
+        # Implied Market Cap = P/E × Net Income
+        # Implied Price = (Implied Market Cap / Shares Outstanding) × 10 (convert crore to rupee value)
+        
+        net_income = financials.get('net_income', 0.1)
+        if net_income <= 0:
+            net_income = 0.1
+        
+        current_pe = financials['market_cap'] / net_income if net_income > 0 else 0
         
         for method in ['avg', 'median', 'high', 'low']:
             multiple = multiples['P/E'].get(method)
-            if multiple:
-                implied_market_cap = multiple * financials['net_income']
-                implied_price = implied_market_cap / financials['shares_outstanding']
-                upside = ((implied_price - financials['share_price']) / financials['share_price']) * 100
+            if multiple and multiple > 0:
+                implied_market_cap = multiple * net_income
+                # Implied Price per Share = Market Cap (in crores) / Shares (in millions) × 10
+                implied_price = (implied_market_cap / (financials.get('shares_outstanding', 1) + 0.01)) * 10
+                
+                if implied_price > 0 and financials['share_price'] > 0:
+                    upside = ((implied_price - financials['share_price']) / financials['share_price']) * 100
+                else:
+                    upside = 0
                 
                 results[method] = {
                     'multiple': multiple,
@@ -190,15 +208,26 @@ def calculate_implied_valuation(financials: dict, multiples: dict, multiple_type
                 }
     
     elif multiple_type == 'P/B' and financials.get('book_value', 0) > 0:
-        # Market Cap = P/B × Book Value
-        current_pb = financials['market_cap'] / financials['book_value']
+        # P/B = Market Cap / Book Value
+        # Implied Market Cap = P/B × Book Value
+        # Implied Price = (Implied Market Cap / Shares Outstanding) × 10
+        
+        book_value = financials.get('book_value', 0.1)
+        if book_value <= 0:
+            book_value = 0.1
+        
+        current_pb = financials['market_cap'] / book_value if book_value > 0 else 0
         
         for method in ['avg', 'median', 'high', 'low']:
             multiple = multiples['P/B'].get(method)
-            if multiple:
-                implied_market_cap = multiple * financials['book_value']
-                implied_price = implied_market_cap / financials['shares_outstanding']
-                upside = ((implied_price - financials['share_price']) / financials['share_price']) * 100
+            if multiple and multiple > 0:
+                implied_market_cap = multiple * book_value
+                implied_price = (implied_market_cap / (financials.get('shares_outstanding', 1) + 0.01)) * 10
+                
+                if implied_price > 0 and financials['share_price'] > 0:
+                    upside = ((implied_price - financials['share_price']) / financials['share_price']) * 100
+                else:
+                    upside = 0
                 
                 results[method] = {
                     'multiple': multiple,
@@ -210,15 +239,26 @@ def calculate_implied_valuation(financials: dict, multiples: dict, multiple_type
                 }
     
     elif multiple_type == 'P/S' and financials.get('revenue', 0) > 0:
-        # Market Cap = P/S × Revenue
-        current_ps = financials['market_cap'] / financials['revenue']
+        # P/S = Market Cap / Revenue
+        # Implied Market Cap = P/S × Revenue
+        # Implied Price = (Implied Market Cap / Shares Outstanding) × 10
+        
+        revenue = financials.get('revenue', 0.1)
+        if revenue <= 0:
+            revenue = 0.1
+        
+        current_ps = financials['market_cap'] / revenue if revenue > 0 else 0
         
         for method in ['avg', 'median', 'high', 'low']:
             multiple = multiples['P/S'].get(method)
-            if multiple:
-                implied_market_cap = multiple * financials['revenue']
-                implied_price = implied_market_cap / financials['shares_outstanding']
-                upside = ((implied_price - financials['share_price']) / financials['share_price']) * 100
+            if multiple and multiple > 0:
+                implied_market_cap = multiple * revenue
+                implied_price = (implied_market_cap / (financials.get('shares_outstanding', 1) + 0.01)) * 10
+                
+                if implied_price > 0 and financials['share_price'] > 0:
+                    upside = ((implied_price - financials['share_price']) / financials['share_price']) * 100
+                else:
+                    upside = 0
                 
                 results[method] = {
                     'multiple': multiple,
@@ -232,16 +272,30 @@ def calculate_implied_valuation(financials: dict, multiples: dict, multiple_type
     elif multiple_type == 'EV/EBITDA' and financials.get('ebitda', 0) > 0:
         # EV = EV/EBITDA × EBITDA
         # Market Cap = EV - Net Debt
+        # Implied Price = (Implied Market Cap / Shares Outstanding) × 10
+        
+        ebitda = financials.get('ebitda', 0.1)
+        if ebitda <= 0:
+            ebitda = 0.1
+        
         net_debt = financials.get('net_debt', 0)
-        current_ev = (financials['market_cap'] + net_debt) / financials['ebitda'] if financials['ebitda'] > 0 else 0
+        current_ev = (financials['market_cap'] + net_debt) / ebitda if ebitda > 0 else 0
         
         for method in ['avg', 'median', 'high', 'low']:
             multiple = multiples['EV/EBITDA'].get(method)
-            if multiple:
-                implied_ev = multiple * financials['ebitda']
+            if multiple and multiple > 0:
+                implied_ev = multiple * ebitda
                 implied_market_cap = implied_ev - net_debt
-                implied_price = implied_market_cap / financials['shares_outstanding']
-                upside = ((implied_price - financials['share_price']) / financials['share_price']) * 100
+                
+                if implied_market_cap <= 0:
+                    implied_market_cap = multiple * ebitda  # Use EV if MC is negative
+                
+                implied_price = (implied_market_cap / (financials.get('shares_outstanding', 1) + 0.01)) * 10
+                
+                if implied_price > 0 and financials['share_price'] > 0:
+                    upside = ((implied_price - financials['share_price']) / financials['share_price']) * 100
+                else:
+                    upside = 0
                 
                 results[method] = {
                     'multiple': multiple,
