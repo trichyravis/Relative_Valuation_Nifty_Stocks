@@ -611,168 +611,7 @@ if analysis_mode == "Single Stock Analysis":
             }
             st.table(pd.DataFrame(perf_data))
         
-        with col3:
-            st.markdown("### 🎯 VALUATION SIGNAL")
-            
-            # Get detailed valuation analysis
-            signal_analysis = analyze_valuation_signal(
-                metrics.get('P/E Ratio'),
-                metrics.get('P/B Ratio'),
-                metrics.get('P/S Ratio'),
-                metrics.get('EV/EBITDA')
-            )
-            
-            # Display overall sentiment
-            st.markdown(f"""
-            <div style="background-color: #f0f0f0; padding: 15px; border-radius: 8px; border-left: 5px solid #003366;">
-                <div style="font-size: 18px; font-weight: bold; color: #003366; margin-bottom: 10px;">
-                {signal_analysis['overall']}
-                </div>
-                <div style="font-size: 13px; color: #555;">
-                {signal_analysis['recommendation']}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Expandable detailed analysis
-            with st.expander("📊 Detailed Valuation Breakdown", expanded=False):
-                
-                # Create metric details table
-                metric_details = []
-                for metric_name, metric_data in signal_analysis['metrics'].items():
-                    metric_details.append({
-                        'Metric': metric_name,
-                        'Value': f"{metric_data['value']:.2f}x",
-                        'Signal': metric_data['signal'],
-                        'Status': metric_data['status'],
-                        'Assessment': metric_data['reasoning']
-                    })
-                
-                if metric_details:
-                    df_signals = pd.DataFrame(metric_details)
-                    st.dataframe(df_signals, use_container_width=True, hide_index=True)
-                
-                # Metric-by-metric analysis
-                st.markdown("#### 📈 Metric-by-Metric Analysis")
-                
-                for metric_name, metric_data in signal_analysis['metrics'].items():
-                    col_signal1, col_signal2, col_signal3 = st.columns(3)
-                    
-                    with col_signal1:
-                        # Color-coded signal box
-                        colors_map = {
-                            'green': '#2ecc71',
-                            'lightgreen': '#7cb342',
-                            'yellow': '#f1c40f',
-                            'orange': '#ff9800',
-                            'red': '#e74c3c'
-                        }
-                        
-                        color = colors_map.get(metric_data['color'], '#95a5a6')
-                        
-                        st.markdown(f"""
-                        <div style="background-color: {color}; color: white; padding: 12px; border-radius: 6px; text-align: center;">
-                            <div style="font-weight: bold; font-size: 14px;">{metric_name}</div>
-                            <div style="font-size: 20px; font-weight: bold; margin: 5px 0;">{metric_data['value']:.2f}x</div>
-                            <div style="font-size: 12px;">{metric_data['signal']}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    
-                    with col_signal2:
-                        st.markdown(f"""
-                        <div style="padding: 12px; border-left: 4px solid #003366;">
-                            <b>Status:</b> {metric_data['status']}<br>
-                            <b>Severity:</b> {metric_data['severity']}<br>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    
-                    with col_signal3:
-                        st.markdown(f"""
-                        <div style="padding: 12px; background-color: #f9f9f9; border-radius: 6px;">
-                            <b>Reasoning:</b><br>
-                            {metric_data['reasoning']}
-                        </div>
-                        """, unsafe_allow_html=True)
-                    
-                    st.markdown("---")
-                
-                # Summary scores
-                st.markdown("#### 📊 Valuation Score")
-                
-                score_col1, score_col2, score_col3, score_col4 = st.columns(4)
-                
-                with score_col1:
-                    st.metric("Undervalued Metrics", signal_analysis['undervalued_count'])
-                with score_col2:
-                    st.metric("Fair Valued Metrics", signal_analysis['fair_count'])
-                with score_col3:
-                    st.metric("Overvalued Metrics", signal_analysis['overvalued_count'])
-                with score_col4:
-                    total_metrics = (signal_analysis['undervalued_count'] + 
-                                   signal_analysis['fair_count'] + 
-                                   signal_analysis['overvalued_count'])
-                    st.metric("Total Metrics", total_metrics)
-                
-                # Investment recommendation
-                st.markdown("#### 💡 Investment Recommendation")
-                
-                if "UNDERVALUED" in signal_analysis['overall']:
-                    recommendation_text = """
-                    **🟢 BUY SIGNAL**
-                    
-                    The stock appears undervalued across multiple metrics. Potential for upside returns.
-                    
-                    *Suitable for:*
-                    - Value investors
-                    - Contrarian investors
-                    - Long-term holders
-                    - Risk-tolerant investors
-                    """
-                    rec_color = "#d4edda"
-                    rec_border = "#28a745"
-                
-                elif "FAIRLY" in signal_analysis['overall']:
-                    recommendation_text = """
-                    **🟡 HOLD SIGNAL**
-                    
-                    The stock is trading at reasonable valuations. Balanced risk-reward profile.
-                    
-                    *Suitable for:*
-                    - Income investors
-                    - Conservative investors
-                    - Current holders
-                    - Moderate growth seekers
-                    """
-                    rec_color = "#fff3cd"
-                    rec_border = "#ffc107"
-                
-                else:
-                    recommendation_text = """
-                    **🔴 SELL SIGNAL**
-                    
-                    The stock appears overvalued on multiple metrics. Limited upside, significant downside risk.
-                    
-                    *Suitable for:*
-                    - Risk-averse investors
-                    - Profit-takers
-                    - Short-term traders
-                    - Those seeking better valuations
-                    """
-                    rec_color = "#f8d7da"
-                    rec_border = "#dc3545"
-                
-                st.markdown(f"""
-                <div style="background-color: {rec_color}; border-left: 5px solid {rec_border}; padding: 15px; border-radius: 6px;">
-                {recommendation_text}
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Disclaimer
-                st.markdown("""
-                ---
-                **⚠️ Disclaimer:** This analysis is based on historical thresholds and valuation ratios. 
-                Always conduct your own due diligence and consult financial advisors before making investment decisions.
-                """)
+
 
         
         st.markdown("---")
@@ -1161,6 +1000,171 @@ if analysis_mode == "Single Stock Analysis":
                         except Exception as e:
                             st.warning(f"Could not load comparable multiples: {str(e)}")
                         
+                        # ================================================================
+                        # VALUATION SIGNAL - MOVED BELOW COMPARABLE MULTIPLES
+                        # ================================================================
+                        st.markdown("---")
+                        st.markdown("### 🎯 VALUATION SIGNAL")
+                        
+                        # Get detailed valuation analysis
+                        signal_analysis = analyze_valuation_signal(
+                            metrics.get('P/E Ratio'),
+                            metrics.get('P/B Ratio'),
+                            metrics.get('P/S Ratio'),
+                            metrics.get('EV/EBITDA')
+                        )
+                        
+                        # Display overall sentiment
+                        st.markdown(f"""
+                        <div style="background-color: #f0f0f0; padding: 15px; border-radius: 8px; border-left: 5px solid #003366;">
+                            <div style="font-size: 18px; font-weight: bold; color: #003366; margin-bottom: 10px;">
+                            {signal_analysis['overall']}
+                            </div>
+                            <div style="font-size: 13px; color: #555;">
+                            {signal_analysis['recommendation']}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Expandable detailed analysis
+                        with st.expander("📊 Detailed Valuation Breakdown", expanded=False):
+                            
+                            # Create metric details table
+                            metric_details = []
+                            for metric_name, metric_data in signal_analysis['metrics'].items():
+                                metric_details.append({
+                                    'Metric': metric_name,
+                                    'Value': f"{metric_data['value']:.2f}x",
+                                    'Signal': metric_data['signal'],
+                                    'Status': metric_data['status'],
+                                    'Assessment': metric_data['reasoning']
+                                })
+                            
+                            if metric_details:
+                                df_signals = pd.DataFrame(metric_details)
+                                st.dataframe(df_signals, use_container_width=True, hide_index=True)
+                            
+                            # Metric-by-metric analysis
+                            st.markdown("#### 📈 Metric-by-Metric Analysis")
+                            
+                            for metric_name, metric_data in signal_analysis['metrics'].items():
+                                col_signal1, col_signal2, col_signal3 = st.columns(3)
+                                
+                                with col_signal1:
+                                    # Color-coded signal box
+                                    colors_map = {
+                                        'green': '#2ecc71',
+                                        'lightgreen': '#7cb342',
+                                        'yellow': '#f1c40f',
+                                        'orange': '#ff9800',
+                                        'red': '#e74c3c'
+                                    }
+                                    
+                                    color = colors_map.get(metric_data['color'], '#95a5a6')
+                                    
+                                    st.markdown(f"""
+                                    <div style="background-color: {color}; color: white; padding: 12px; border-radius: 6px; text-align: center;">
+                                        <div style="font-weight: bold; font-size: 14px;">{metric_name}</div>
+                                        <div style="font-size: 20px; font-weight: bold; margin: 5px 0;">{metric_data['value']:.2f}x</div>
+                                        <div style="font-size: 12px;">{metric_data['signal']}</div>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                                
+                                with col_signal2:
+                                    st.markdown(f"""
+                                    <div style="padding: 12px; border-left: 4px solid #003366;">
+                                        <b>Status:</b> {metric_data['status']}<br>
+                                        <b>Severity:</b> {metric_data['severity']}<br>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                                
+                                with col_signal3:
+                                    st.markdown(f"""
+                                    <div style="padding: 12px; background-color: #f9f9f9; border-radius: 6px;">
+                                        <b>Reasoning:</b><br>
+                                        {metric_data['reasoning']}
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                                
+                                st.markdown("---")
+                            
+                            # Summary scores
+                            st.markdown("#### 📊 Valuation Score")
+                            
+                            score_col1, score_col2, score_col3, score_col4 = st.columns(4)
+                            
+                            with score_col1:
+                                st.metric("Undervalued Metrics", signal_analysis['undervalued_count'])
+                            with score_col2:
+                                st.metric("Fair Valued Metrics", signal_analysis['fair_count'])
+                            with score_col3:
+                                st.metric("Overvalued Metrics", signal_analysis['overvalued_count'])
+                            with score_col4:
+                                total_metrics = (signal_analysis['undervalued_count'] + 
+                                               signal_analysis['fair_count'] + 
+                                               signal_analysis['overvalued_count'])
+                                st.metric("Total Metrics", total_metrics)
+                            
+                            # Investment recommendation
+                            st.markdown("#### 💡 Investment Recommendation")
+                            
+                            if "UNDERVALUED" in signal_analysis['overall']:
+                                recommendation_text = """
+                                **🟢 BUY SIGNAL**
+                                
+                                The stock appears undervalued across multiple metrics. Potential for upside returns.
+                                
+                                *Suitable for:*
+                                - Value investors
+                                - Contrarian investors
+                                - Long-term holders
+                                - Risk-tolerant investors
+                                """
+                                rec_color = "#d4edda"
+                                rec_border = "#28a745"
+                            
+                            elif "FAIRLY" in signal_analysis['overall']:
+                                recommendation_text = """
+                                **🟡 HOLD SIGNAL**
+                                
+                                The stock is trading at reasonable valuations. Balanced risk-reward profile.
+                                
+                                *Suitable for:*
+                                - Income investors
+                                - Conservative investors
+                                - Current holders
+                                - Moderate growth seekers
+                                """
+                                rec_color = "#fff3cd"
+                                rec_border = "#ffc107"
+                            
+                            else:
+                                recommendation_text = """
+                                **🔴 SELL SIGNAL**
+                                
+                                The stock appears overvalued on multiple metrics. Limited upside, significant downside risk.
+                                
+                                *Suitable for:*
+                                - Risk-averse investors
+                                - Profit-takers
+                                - Short-term traders
+                                - Those seeking better valuations
+                                """
+                                rec_color = "#f8d7da"
+                                rec_border = "#dc3545"
+                            
+                            st.markdown(f"""
+                            <div style="background-color: {rec_color}; border-left: 5px solid {rec_border}; padding: 15px; border-radius: 6px;">
+                            {recommendation_text}
+                            </div>
+                            """, unsafe_allow_html=True)
+                            
+                            # Disclaimer
+                            st.markdown("""
+                            ---
+                            **⚠️ Disclaimer:** This analysis is based on historical thresholds and valuation ratios. 
+                            Always conduct your own due diligence and consult financial advisors before making investment decisions.
+                            """)
 
             except Exception as e:
                 st.error(f"Error: {str(e)}")
