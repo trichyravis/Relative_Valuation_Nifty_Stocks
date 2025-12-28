@@ -705,7 +705,147 @@ if analysis_mode == "Single Stock Analysis":
         
         # Expandable detailed analysis
         with st.expander("📊 DETAILED VALUATION BREAKDOWN", expanded=False):
-            st.write("**Comprehensive metric-by-metric analysis**")
+            
+            # -------- COMPARABLE MULTIPLES SECTION --------
+            st.subheader("💰 Comparable Multiples Valuation")
+            
+            sector = NIFTY_50_DATA[selected_ticker]['Sector']
+            st.write(f"**Sector:** {sector}")
+            
+            # Get peer companies in same sector
+            peer_companies = [
+                (ticker, data['Company']) 
+                for ticker, data in NIFTY_50_DATA.items() 
+                if data['Sector'] == sector and ticker != selected_ticker
+            ]
+            
+            if peer_companies:
+                st.write(f"**Peer Companies:** {', '.join([name for _, name in peer_companies[:5]])}")
+                
+                # Fetch metrics for peer companies
+                peer_metrics = []
+                with st.spinner("Analyzing comparable companies..."):
+                    for peer_ticker, peer_name in peer_companies[:5]:
+                        peer_info = fetch_stock_info(peer_ticker)
+                        if peer_info:
+                            peer_data = {
+                                'Company': peer_name,
+                                'P/E': peer_info.get('trailingPE'),
+                                'P/B': peer_info.get('priceToBook'),
+                                'P/S': peer_info.get('priceToSalesTrailing12Months'),
+                                'EV/EBITDA': peer_info.get('enterpriseToEbitda'),
+                            }
+                            peer_metrics.append(peer_data)
+                
+                if peer_metrics:
+                    st.markdown("**Peer Company Multiples:**")
+                    df_peers = pd.DataFrame(peer_metrics)
+                    
+                    # Format for display
+                    df_peers_display = df_peers.copy()
+                    for col in ['P/E', 'P/B', 'P/S', 'EV/EBITDA']:
+                        df_peers_display[col] = df_peers_display[col].apply(
+                            lambda x: f"{x:.2f}x" if pd.notna(x) else "N/A"
+                        )
+                    
+                    st.dataframe(df_peers_display, use_container_width=True, hide_index=True)
+                    
+                    st.markdown("---")
+                    
+                    # Calculate sector average multiples
+                    st.markdown("**Sector Average Multiples:**")
+                    
+                    sector_pe_avg = df_peers[df_peers['P/E'].notna()]['P/E'].mean() if len(df_peers['P/E'].dropna()) > 0 else metrics.get('P/E Ratio')
+                    sector_pb_avg = df_peers[df_peers['P/B'].notna()]['P/B'].mean() if len(df_peers['P/B'].dropna()) > 0 else metrics.get('P/B Ratio')
+                    sector_ps_avg = df_peers[df_peers['P/S'].notna()]['P/S'].mean() if len(df_peers['P/S'].dropna()) > 0 else metrics.get('P/S Ratio')
+                    sector_ev_avg = df_peers[df_peers['EV/EBITDA'].notna()]['EV/EBITDA'].mean() if len(df_peers['EV/EBITDA'].dropna()) > 0 else metrics.get('EV/EBITDA')
+                    
+                    col_sector1, col_sector2, col_sector3, col_sector4 = st.columns(4)
+                    
+                    with col_sector1:
+                        st.metric("Avg P/E", f"{sector_pe_avg:.2f}x" if sector_pe_avg else "N/A")
+                    with col_sector2:
+                        st.metric("Avg P/B", f"{sector_pb_avg:.2f}x" if sector_pb_avg else "N/A")
+                    with col_sector3:
+                        st.metric("Avg P/S", f"{sector_ps_avg:.2f}x" if sector_ps_avg else "N/A")
+                    with col_sector4:
+                        st.metric("Avg EV/EBITDA", f"{sector_ev_avg:.2f}x" if sector_ev_avg else "N/A")
+                    
+                    st.markdown("---")
+                    
+                    # Implied valuation comparison
+                    st.markdown("**Implied Valuation vs Peer Multiples:**")
+                    
+                    current_price = metrics.get('Current Price', 0)
+                    shares_outstanding = info.get('sharesOutstanding', 1000000) / 1000000  # in millions
+                    
+                    implied_data = []
+                    
+                    # P/E based valuation
+                    if metrics.get('P/E Ratio') and sector_pe_avg:
+                        pe_multiple = sector_pe_avg
+                        net_income = info.get('marketCap', 0) / (metrics.get('P/E Ratio', 1) or 1)
+                        implied_price_pe = net_income / shares_outstanding if shares_outstanding > 0 else current_price
+                        upside_pe = ((implied_price_pe - current_price) / current_price * 100) if current_price > 0 else 0
+                        implied_data.append({
+                            'Method': 'P/E Ratio',
+                            'Sector Multiple': f"{pe_multiple:.2f}x",
+                            'Implied Price': f"₹{implied_price_pe:.0f}",
+                            'Upside/Downside': f"{upside_pe:+.1f}%"
+                        })
+                    
+                    # P/B based valuation
+                    if metrics.get('P/B Ratio') and sector_pb_avg:
+                        pb_multiple = sector_pb_avg
+                        book_value = info.get('marketCap', 0) / (metrics.get('P/B Ratio', 1) or 1)
+                        implied_price_pb = book_value / shares_outstanding if shares_outstanding > 0 else current_price
+                        upside_pb = ((implied_price_pb - current_price) / current_price * 100) if current_price > 0 else 0
+                        implied_data.append({
+                            'Method': 'P/B Ratio',
+                            'Sector Multiple': f"{pb_multiple:.2f}x",
+                            'Implied Price': f"₹{implied_price_pb:.0f}",
+                            'Upside/Downside': f"{upside_pb:+.1f}%"
+                        })
+                    
+                    # P/S based valuation
+                    if metrics.get('P/S Ratio') and sector_ps_avg:
+                        ps_multiple = sector_ps_avg
+                        revenue = info.get('marketCap', 0) / (metrics.get('P/S Ratio', 1) or 1)
+                        implied_price_ps = revenue / shares_outstanding if shares_outstanding > 0 else current_price
+                        upside_ps = ((implied_price_ps - current_price) / current_price * 100) if current_price > 0 else 0
+                        implied_data.append({
+                            'Method': 'P/S Ratio',
+                            'Sector Multiple': f"{ps_multiple:.2f}x",
+                            'Implied Price': f"₹{implied_price_ps:.0f}",
+                            'Upside/Downside': f"{upside_ps:+.1f}%"
+                        })
+                    
+                    # EV/EBITDA based valuation
+                    if metrics.get('EV/EBITDA') and sector_ev_avg:
+                        ev_multiple = sector_ev_avg
+                        ebitda = (info.get('marketCap', 0) + info.get('totalDebt', 0) - info.get('totalCash', 0)) / (metrics.get('EV/EBITDA', 1) or 1)
+                        implied_price_ev = ebitda / shares_outstanding if shares_outstanding > 0 else current_price
+                        upside_ev = ((implied_price_ev - current_price) / current_price * 100) if current_price > 0 else 0
+                        implied_data.append({
+                            'Method': 'EV/EBITDA',
+                            'Sector Multiple': f"{ev_multiple:.2f}x",
+                            'Implied Price': f"₹{implied_price_ev:.0f}",
+                            'Upside/Downside': f"{upside_ev:+.1f}%"
+                        })
+                    
+                    if implied_data:
+                        df_implied = pd.DataFrame(implied_data)
+                        st.dataframe(df_implied, use_container_width=True, hide_index=True)
+                        
+                        st.info(
+                            f"""
+                            **Current Price:** ₹{current_price:.0f}
+                            
+                            Green = Undervalued | Yellow = Fair Value | Red = Overvalued
+                            """
+                        )
+            
+            st.markdown("---")
             
             # METRIC-BY-METRIC ANALYSIS
             st.subheader("🔍 Metric Analysis")
