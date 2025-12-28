@@ -675,7 +675,7 @@ with st.sidebar:
     # LinkedIn Button
     st.markdown("""
     <div style="margin-top: 15px;">
-        <a href="https://www.linkedin.com/in/vravichandran/" target="_blank" 
+        <a href="https://www.linkedin.com/in/trichyravis/" target="_blank" 
            style="display: block; background-color: #1e5a96; color: #FFD700; 
                   border: 2px solid #FFD700; padding: 10px 15px; border-radius: 6px; 
                   text-align: center; font-weight: bold; text-decoration: none; 
